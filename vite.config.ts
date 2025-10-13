@@ -54,7 +54,7 @@
       outDir: 'build',
     },
     server: {
-      port: 4173,
+      port: 5173,
       open: true,
     },
   });
