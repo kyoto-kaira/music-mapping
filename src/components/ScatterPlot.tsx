@@ -16,6 +16,17 @@ export function ScatterPlot({
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isSelecting, setIsSelecting] = useState(false);
+  
+  // ズーム状態を保持するためのref
+  const zoomStateRef = useRef<{
+    xDomain: [number, number] | null;
+    yDomain: [number, number] | null;
+    isZoomed: boolean;
+  }>({
+    xDomain: null,
+    yDomain: null,
+    isZoomed: false
+  });
 
   const data = useMemo(() => {
     return filterSongsWithCoordinates(songs);
@@ -48,12 +59,21 @@ export function ScatterPlot({
     const xPadding = (xExtent[1] - xExtent[0]) * CONSTANTS.MAP_PADDING || 10;
     const yPadding = (yExtent[1] - yExtent[0]) * CONSTANTS.MAP_PADDING || 10;
     
+    // ズーム状態を保持している場合はそれを使用、そうでなければデフォルト範囲を使用
+    const initialXDomain = zoomStateRef.current.isZoomed && zoomStateRef.current.xDomain 
+      ? zoomStateRef.current.xDomain 
+      : [xExtent[0] - xPadding, xExtent[1] + xPadding];
+    
+    const initialYDomain = zoomStateRef.current.isZoomed && zoomStateRef.current.yDomain 
+      ? zoomStateRef.current.yDomain 
+      : [yExtent[0] - yPadding, yExtent[1] + yPadding];
+    
     const xScale = d3.scaleLinear()
-      .domain([xExtent[0] - xPadding, xExtent[1] + xPadding])
+      .domain(initialXDomain)
       .range([0, width]);
     
     const yScale = d3.scaleLinear()
-      .domain([yExtent[0] - yPadding, yExtent[1] + yPadding])
+      .domain(initialYDomain)
       .range([height, 0]);
 
     // Create main group
@@ -195,6 +215,13 @@ export function ScatterPlot({
       xScale.domain([dataX0, dataX1]);
       yScale.domain([dataY0, dataY1]);
 
+      // ズーム状態を保存
+      zoomStateRef.current = {
+        xDomain: [dataX0, dataX1],
+        yDomain: [dataY0, dataY1],
+        isZoomed: true
+      };
+
       // Update visualization with animation
       updateVisualization();
     };
@@ -317,6 +344,14 @@ export function ScatterPlot({
     svg.on('dblclick', () => {
       xScale.domain([xExtent[0] - xPadding, xExtent[1] + xPadding]);
       yScale.domain([yExtent[0] - yPadding, yExtent[1] + yPadding]);
+      
+      // ズーム状態をリセット
+      zoomStateRef.current = {
+        xDomain: null,
+        yDomain: null,
+        isZoomed: false
+      };
+      
       updateVisualization();
     });
 
@@ -325,7 +360,7 @@ export function ScatterPlot({
       event.preventDefault();
     });
 
-  }, [songs, mapAxes, hasCoordinates, selectedSong, onSongSelect, newlyAddedSongId]);
+  }, [mapAxes, hasCoordinates, selectedSong, onSongSelect, newlyAddedSongId]);
 
   // Handle resize
   useEffect(() => {
