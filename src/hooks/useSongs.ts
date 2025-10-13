@@ -60,9 +60,11 @@ export const useSongs = () => {
       } else {
         throw new Error(response.message || 'Failed to add song');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding song:', error);
-      toast.error(CONSTANTS.MESSAGES.ERROR.SONG_ADDITION_FAILED);
+      // サーバーからのエラーメッセージがある場合はそれを使用、なければデフォルトメッセージ
+      const errorMessage = error?.message || CONSTANTS.MESSAGES.ERROR.SONG_ADDITION_FAILED;
+      toast.error(errorMessage);
       return null;
     }
   }, []);

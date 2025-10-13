@@ -57,7 +57,7 @@ router.post('/', (req, res) => {
     if (existingSong) {
       return res.status(409).json({
         success: false,
-        message: 'Song already exists in the map',
+        message: 'すでにこの曲は追加されています',
         code: 'SONG_ALREADY_EXISTS'
       });
     }
