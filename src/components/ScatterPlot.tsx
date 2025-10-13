@@ -94,32 +94,113 @@ export function ScatterPlot({
     // Create gradient definitions
     const defs = svg.append('defs');
     
+    // Normal gradient - beautiful blue-purple gradient
     const normalGradient = defs.append('radialGradient')
-      .attr('id', 'normalGradient');
+      .attr('id', 'normalGradient')
+      .attr('cx', '30%')
+      .attr('cy', '30%')
+      .attr('r', '70%');
     normalGradient.append('stop')
       .attr('offset', '0%')
-      .attr('stop-color', '#667eea');
+      .attr('stop-color', '#4F46E5')
+      .attr('stop-opacity', '0.9');
+    normalGradient.append('stop')
+      .attr('offset', '50%')
+      .attr('stop-color', '#7C3AED')
+      .attr('stop-opacity', '0.8');
     normalGradient.append('stop')
       .attr('offset', '100%')
-      .attr('stop-color', '#764ba2');
+      .attr('stop-color', '#A855F7')
+      .attr('stop-opacity', '0.7');
 
+    // Selected gradient - vibrant orange-red gradient
     const selectedGradient = defs.append('radialGradient')
-      .attr('id', 'selectedGradient');
+      .attr('id', 'selectedGradient')
+      .attr('cx', '30%')
+      .attr('cy', '30%')
+      .attr('r', '70%');
     selectedGradient.append('stop')
       .attr('offset', '0%')
-      .attr('stop-color', '#ff6b6b');
+      .attr('stop-color', '#F59E0B')
+      .attr('stop-opacity', '1');
+    selectedGradient.append('stop')
+      .attr('offset', '50%')
+      .attr('stop-color', '#EF4444')
+      .attr('stop-opacity', '0.9');
     selectedGradient.append('stop')
       .attr('offset', '100%')
-      .attr('stop-color', '#ee5a52');
+      .attr('stop-color', '#DC2626')
+      .attr('stop-opacity', '0.8');
 
+    // New gradient - fresh green gradient
     const newGradient = defs.append('radialGradient')
-      .attr('id', 'newGradient');
+      .attr('id', 'newGradient')
+      .attr('cx', '30%')
+      .attr('cy', '30%')
+      .attr('r', '70%');
     newGradient.append('stop')
       .attr('offset', '0%')
-      .attr('stop-color', '#10B981');
+      .attr('stop-color', '#10B981')
+      .attr('stop-opacity', '1');
+    newGradient.append('stop')
+      .attr('offset', '50%')
+      .attr('stop-color', '#059669')
+      .attr('stop-opacity', '0.9');
     newGradient.append('stop')
       .attr('offset', '100%')
-      .attr('stop-color', '#059669');
+      .attr('stop-color', '#047857')
+      .attr('stop-opacity', '0.8');
+
+    // Hover gradient - bright cyan gradient
+    const hoverGradient = defs.append('radialGradient')
+      .attr('id', 'hoverGradient')
+      .attr('cx', '30%')
+      .attr('cy', '30%')
+      .attr('r', '70%');
+    hoverGradient.append('stop')
+      .attr('offset', '0%')
+      .attr('stop-color', '#06B6D4')
+      .attr('stop-opacity', '1');
+    hoverGradient.append('stop')
+      .attr('offset', '50%')
+      .attr('stop-color', '#0891B2')
+      .attr('stop-opacity', '0.9');
+    hoverGradient.append('stop')
+      .attr('offset', '100%')
+      .attr('stop-color', '#0E7490')
+      .attr('stop-opacity', '0.8');
+
+    // Glow filter for selected/new points
+    const glowFilter = defs.append('filter')
+      .attr('id', 'glow')
+      .attr('x', '-50%')
+      .attr('y', '-50%')
+      .attr('width', '200%')
+      .attr('height', '200%');
+    
+    glowFilter.append('feGaussianBlur')
+      .attr('stdDeviation', '3')
+      .attr('result', 'coloredBlur');
+    
+    const feMerge = glowFilter.append('feMerge');
+    feMerge.append('feMergeNode').attr('in', 'coloredBlur');
+    feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+    // Subtle glow filter for normal points
+    const subtleGlowFilter = defs.append('filter')
+      .attr('id', 'subtleGlow')
+      .attr('x', '-20%')
+      .attr('y', '-20%')
+      .attr('width', '140%')
+      .attr('height', '140%');
+    
+    subtleGlowFilter.append('feGaussianBlur')
+      .attr('stdDeviation', '1')
+      .attr('result', 'coloredBlur');
+    
+    const subtleFeMerge = subtleGlowFilter.append('feMerge');
+    subtleFeMerge.append('feMergeNode').attr('in', 'coloredBlur');
+    subtleFeMerge.append('feMergeNode').attr('in', 'SourceGraphic');
 
     // Add grid
     const xGridlines = g.append('g')
@@ -137,10 +218,11 @@ export function ScatterPlot({
         .tickFormat(() => '')
       );
 
-    // Style grid lines
+    // Style grid lines with beautiful gradient
     svg.selectAll('.grid line')
-      .style('stroke', 'rgba(0, 0, 0, 0.05)')
-      .style('stroke-width', 1);
+      .style('stroke', 'rgba(99, 102, 241, 0.08)')
+      .style('stroke-width', 1)
+      .style('stroke-dasharray', '2,4');
 
     svg.selectAll('.grid path')
       .style('stroke', 'none');
@@ -254,9 +336,9 @@ export function ScatterPlot({
       .attr('cx', d => xScale(d.x!))
       .attr('cy', d => yScale(d.y!))
       .attr('r', d => {
-        if (selectedSong?.id === d.id) return 8;
-        if (newlyAddedSongId === d.id) return 8;
-        return 6;
+        if (selectedSong?.id === d.id) return 10;
+        if (newlyAddedSongId === d.id) return 10;
+        return 7;
       })
       .attr('fill', d => {
         if (selectedSong?.id === d.id) return 'url(#selectedGradient)';
@@ -264,17 +346,49 @@ export function ScatterPlot({
         return 'url(#normalGradient)';
       })
       .attr('stroke', d => {
-        if (newlyAddedSongId === d.id) return '#10B981';
-        return 'rgba(255, 255, 255, 0.8)';
+        if (selectedSong?.id === d.id) return 'rgba(255, 255, 255, 0.9)';
+        if (newlyAddedSongId === d.id) return 'rgba(255, 255, 255, 0.9)';
+        return 'rgba(255, 255, 255, 0.6)';
       })
-      .attr('stroke-width', d => newlyAddedSongId === d.id ? 3 : 1.5)
+      .attr('stroke-width', d => {
+        if (selectedSong?.id === d.id) return 2.5;
+        if (newlyAddedSongId === d.id) return 2.5;
+        return 1.5;
+      })
       .style('cursor', 'pointer')
       .style('pointer-events', 'all')
       .style('filter', d => {
         if (selectedSong?.id === d.id || newlyAddedSongId === d.id) {
-          return 'drop-shadow(2px 2px 8px rgba(0,0,0,0.3))';
+          return 'url(#glow)';
         }
-        return 'none';
+        return 'url(#subtleGlow)';
+      })
+      .style('opacity', 0.9)
+      .style('transition', 'all 0.3s ease');
+
+    // Add hover effects
+    circles
+      .on('mouseenter', function(event, d) {
+        if (selectedSong?.id !== d.id && newlyAddedSongId !== d.id) {
+          d3.select(this)
+            .transition()
+            .duration(200)
+            .attr('r', 9)
+            .attr('fill', 'url(#hoverGradient)')
+            .style('opacity', 1)
+            .style('filter', 'url(#glow)');
+        }
+      })
+      .on('mouseleave', function(event, d) {
+        if (selectedSong?.id !== d.id && newlyAddedSongId !== d.id) {
+          d3.select(this)
+            .transition()
+            .duration(200)
+            .attr('r', 7)
+            .attr('fill', 'url(#normalGradient)')
+            .style('opacity', 0.9)
+            .style('filter', 'url(#subtleGlow)');
+        }
       });
 
     // Add click handlers to points
@@ -300,15 +414,16 @@ export function ScatterPlot({
     const updateVisualization = () => {
       const t = d3.transition().duration(750);
       
-      // Update grid with proper styling maintained
+      // Update grid with beautiful styling maintained
       xGridlines.transition(t)
         .call(d3.axisBottom(xScale)
           .tickSize(-height)
           .tickFormat(() => '')
         )
         .selectAll('line')
-        .style('stroke', 'rgba(0, 0, 0, 0.05)')
-        .style('stroke-width', 1);
+        .style('stroke', 'rgba(99, 102, 241, 0.08)')
+        .style('stroke-width', 1)
+        .style('stroke-dasharray', '2,4');
       
       yGridlines.transition(t)
         .call(d3.axisLeft(yScale)
@@ -316,8 +431,9 @@ export function ScatterPlot({
           .tickFormat(() => '')
         )
         .selectAll('line')
-        .style('stroke', 'rgba(0, 0, 0, 0.05)')
-        .style('stroke-width', 1);
+        .style('stroke', 'rgba(99, 102, 241, 0.08)')
+        .style('stroke-width', 1)
+        .style('stroke-dasharray', '2,4');
 
       // Update axes with hidden styling
       xAxisGroup.transition(t)
@@ -335,13 +451,14 @@ export function ScatterPlot({
         .attr('cx', d => xScale(d.x!))
         .attr('cy', d => yScale(d.y!));
 
-      // Ensure consistent styling throughout and after transition
+      // Ensure consistent beautiful styling throughout and after transition
       svg.selectAll('.domain').style('stroke', 'none');
       svg.selectAll('.tick line').style('stroke', 'none');
       svg.selectAll('.tick text').style('display', 'none');
       svg.selectAll('.grid line')
-        .style('stroke', 'rgba(0, 0, 0, 0.05)')
-        .style('stroke-width', 1);
+        .style('stroke', 'rgba(99, 102, 241, 0.08)')
+        .style('stroke-width', 1)
+        .style('stroke-dasharray', '2,4');
       svg.selectAll('.grid path')
         .style('stroke', 'none');
       svg.selectAll('.grid text')
