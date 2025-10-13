@@ -1,18 +1,10 @@
+import { ExternalLink, GripVertical, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Card, CardContent } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { ExternalLink, Trash2, X, GripVertical } from 'lucide-react';
-import { Song } from '../App';
+import { FloatingCardProps } from '../types';
 import { AudioPlayer } from './AudioPlayer';
-
-interface FloatingCardProps {
-  song: Song;
-  position?: { x: number; y: number } | null;
-  onRemove: (songId: string) => void;
-  onClose: () => void;
-  isNewlyAdded?: boolean;
-}
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
 
 export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded = false }: FloatingCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);

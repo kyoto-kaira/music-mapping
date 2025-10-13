@@ -1,95 +1,30 @@
-import { useState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Card, CardContent } from './ui/card';
-import { Badge } from './ui/badge';
-import { Search, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { Song } from '../App';
+import { ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
-
-interface SidebarProps {
-  isOpen: boolean;
-  onToggle: () => void;
-  onAddSong: (song: Omit<Song, 'x' | 'y'>) => void;
-  hasCoordinates: boolean;
-}
-
-interface SearchResult {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  imageUrl: string;
-  spotifyUrl: string;
-}
+import { CONSTANTS } from '../constants';
+import { useSongSearch } from '../hooks/useSongs';
+import { SidebarProps } from '../types';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { Input } from './ui/input';
 
 export function Sidebar({ isOpen, onToggle, onAddSong, hasCoordinates }: SidebarProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-
-  const mockSearchResults: SearchResult[] = [
-    {
-      id: 'search-1',
-      title: 'As It Was',
-      artist: 'Harry Styles',
-      album: "Harry's House",
-      imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop',
-      spotifyUrl: 'https://open.spotify.com/track/4Dvkj6JhhA12EX05fT7y2e'
-    },
-    {
-      id: 'search-2',
-      title: 'Bad Habit',
-      artist: 'Steve Lacy',
-      album: 'Gemini Rights',
-      imageUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=300&h=300&fit=crop',
-      spotifyUrl: 'https://open.spotify.com/track/4k6Uh1HXdhtusDW5y8Guitj'
-    },
-    {
-      id: 'search-3',
-      title: 'Unholy',
-      artist: 'Sam Smith ft. Kim Petras',
-      album: 'Gloria',
-      imageUrl: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=300&h=300&fit=crop',
-      spotifyUrl: 'https://open.spotify.com/track/3nqQXoyQOWXiESFLlDF1hG'
-    }
-  ];
-
-  const handleSearch = async (query?: string) => {
-    const searchTerm = query || searchQuery;
-    if (!searchTerm.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      // Simulate API search delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Filter mock results based on search term
-      const filteredResults = mockSearchResults.filter(song =>
-        song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        song.artist.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      
-      setSearchResults(filteredResults);
-    } catch (error) {
-      toast.error('検索に失敗しました');
-    } finally {
-      setIsSearching(false);
-    }
-  };
+  const { 
+    searchQuery, 
+    setSearchQuery, 
+    searchResults, 
+    isSearching, 
+    performSearch 
+  } = useSongSearch();
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleSearch();
+      performSearch();
     }
   };
 
-  const handleAddSong = (result: SearchResult) => {
+  const handleAddSong = (result: typeof searchResults[0]) => {
     if (!hasCoordinates) {
-      toast.error('まずマップを作成してください');
+      toast.error(CONSTANTS.MESSAGES.ERROR.MAP_CREATION_REQUIRED);
       return;
     }
 
@@ -100,7 +35,7 @@ export function Sidebar({ isOpen, onToggle, onAddSong, hasCoordinates }: Sidebar
       album: result.album,
       imageUrl: result.imageUrl,
       spotifyUrl: result.spotifyUrl,
-      previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav'
+      previewUrl: CONSTANTS.DEFAULT_PREVIEW_URL
     });
   };
 
@@ -114,7 +49,7 @@ export function Sidebar({ isOpen, onToggle, onAddSong, hasCoordinates }: Sidebar
             <div className="flex items-center gap-2 mb-4">
               <Search className="w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="曲名やアーティスト名で検索"
+                placeholder={CONSTANTS.PLACEHOLDERS.SEARCH}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -122,17 +57,17 @@ export function Sidebar({ isOpen, onToggle, onAddSong, hasCoordinates }: Sidebar
               />
               <Button 
                 size="sm" 
-                onClick={() => handleSearch()}
+                onClick={() => performSearch()}
                 disabled={isSearching || !searchQuery.trim()}
               >
-                検索
+                {CONSTANTS.BUTTONS.SEARCH}
               </Button>
             </div>
             
             {!hasCoordinates && (
               <div className="bg-muted/50 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  曲を追加するにはまずマップを作成してください
+                  {CONSTANTS.MESSAGES.INFO.MAP_CREATION_REQUIRED}
                 </p>
               </div>
             )}
@@ -142,20 +77,20 @@ export function Sidebar({ isOpen, onToggle, onAddSong, hasCoordinates }: Sidebar
             {isSearching && (
               <div className="text-center py-8">
                 <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                <p className="text-sm text-muted-foreground">検索中...</p>
+                <p className="text-sm text-muted-foreground">{CONSTANTS.MESSAGES.INFO.SEARCHING}</p>
               </div>
             )}
             
             {!isSearching && searchResults.length === 0 && searchQuery && (
               <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground">検索結果が見つかりませんでした</p>
+                <p className="text-sm text-muted-foreground">{CONSTANTS.MESSAGES.INFO.NO_RESULTS}</p>
               </div>
             )}
             
             {!isSearching && searchResults.length === 0 && !searchQuery && (
               <div className="text-center py-8">
                 <p className="text-sm text-muted-foreground">
-                  曲名やアーティスト名を入力して検索してください
+                  {CONSTANTS.MESSAGES.INFO.ENTER_SEARCH_TERM}
                 </p>
               </div>
             )}

@@ -1,11 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2 } from 'lucide-react';
+import { Pause, Play, Volume2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { CONSTANTS } from '../constants';
+import { AudioPlayerProps } from '../types';
+import { formatTime } from '../utils';
 import { Button } from './ui/button';
-
-interface AudioPlayerProps {
-  previewUrl?: string;
-  className?: string;
-}
 
 export function AudioPlayer({ previewUrl, className = '' }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -66,11 +64,6 @@ export function AudioPlayer({ previewUrl, className = '' }: AudioPlayerProps) {
     }
   };
 
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
 
   if (!previewUrl) {
     return (
@@ -81,7 +74,7 @@ export function AudioPlayer({ previewUrl, className = '' }: AudioPlayerProps) {
         className={className}
       >
         <Volume2 className="w-4 h-4 mr-2" />
-        プレビューなし
+        {CONSTANTS.BUTTONS.NO_PREVIEW}
       </Button>
     );
   }
@@ -103,7 +96,7 @@ export function AudioPlayer({ previewUrl, className = '' }: AudioPlayerProps) {
         ) : (
           <Play className="w-4 h-4 mr-2" />
         )}
-        {isLoading ? '読み込み中...' : isPlaying ? '停止' : 'プレビュー再生'}
+        {isLoading ? CONSTANTS.BUTTONS.LOADING : isPlaying ? CONSTANTS.BUTTONS.PAUSE : CONSTANTS.BUTTONS.PREVIEW_PLAY}
       </Button>
       
       {duration > 0 && (

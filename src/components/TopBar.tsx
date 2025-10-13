@@ -1,14 +1,9 @@
 import { useState } from 'react';
+import { CONSTANTS } from '../constants';
+import { TopBarProps } from '../types';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { MapAxes } from '../App';
-
-interface TopBarProps {
-  onCreateMap: (axes: MapAxes) => void;
-  isLoading: boolean;
-  mapAxes: MapAxes;
-}
 
 export function TopBar({ onCreateMap, isLoading, mapAxes }: TopBarProps) {
   const [xAxis, setXAxis] = useState(mapAxes.xAxis);
@@ -28,7 +23,7 @@ export function TopBar({ onCreateMap, isLoading, mapAxes }: TopBarProps) {
             id="x-axis"
             value={xAxis}
             onChange={(e) => setXAxis(e.target.value)}
-            placeholder="例: エネルギー、テンポ、ポジティブさ"
+            placeholder={CONSTANTS.PLACEHOLDERS.X_AXIS}
             disabled={isLoading}
           />
         </div>
@@ -39,7 +34,7 @@ export function TopBar({ onCreateMap, isLoading, mapAxes }: TopBarProps) {
             id="y-axis"
             value={yAxis}
             onChange={(e) => setYAxis(e.target.value)}
-            placeholder="例: ダンサビリティ、感情価、アコースティック度"
+            placeholder={CONSTANTS.PLACEHOLDERS.Y_AXIS}
             disabled={isLoading}
           />
         </div>
@@ -48,7 +43,7 @@ export function TopBar({ onCreateMap, isLoading, mapAxes }: TopBarProps) {
           type="submit" 
           disabled={isLoading || !xAxis.trim() || !yAxis.trim()}
         >
-          {isLoading ? 'マップ作成中...' : 'マップ作成'}
+          {isLoading ? CONSTANTS.BUTTONS.CREATING_MAP : CONSTANTS.BUTTONS.CREATE_MAP}
         </Button>
       </form>
     </div>

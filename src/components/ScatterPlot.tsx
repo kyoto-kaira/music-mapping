@@ -1,16 +1,8 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
-import { Song, MapAxes } from '../App';
-
-interface ScatterPlotProps {
-  songs: Song[];
-  mapAxes: MapAxes;
-  hasCoordinates: boolean;
-  selectedSong: Song | null;
-  onSongSelect: (song: Song, position?: { x: number; y: number }) => void;
-  isLoading: boolean;
-  newlyAddedSongId?: string | null;
-}
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { CONSTANTS } from '../constants';
+import { filterSongsWithCoordinates } from '../data/mockData';
+import { ScatterPlotProps } from '../types';
 
 export function ScatterPlot({ 
   songs, 
@@ -26,7 +18,7 @@ export function ScatterPlot({
   const [isSelecting, setIsSelecting] = useState(false);
 
   const data = useMemo(() => {
-    return songs.filter(song => song.x !== undefined && song.y !== undefined);
+    return filterSongsWithCoordinates(songs);
   }, [songs]);
 
   useEffect(() => {
@@ -45,7 +37,7 @@ export function ScatterPlot({
     svg.selectAll("*").remove();
 
     // Filter songs with coordinates
-    const data = songs.filter(song => song.x !== undefined && song.y !== undefined);
+    const data = filterSongsWithCoordinates(songs);
     if (data.length === 0) return;
 
     // Set up scales
@@ -53,8 +45,8 @@ export function ScatterPlot({
     const yExtent = d3.extent(data, d => d.y!) as [number, number];
     
     // Add padding to extents
-    const xPadding = (xExtent[1] - xExtent[0]) * 0.1 || 10;
-    const yPadding = (yExtent[1] - yExtent[0]) * 0.1 || 10;
+    const xPadding = (xExtent[1] - xExtent[0]) * CONSTANTS.MAP_PADDING || 10;
+    const yPadding = (yExtent[1] - yExtent[0]) * CONSTANTS.MAP_PADDING || 10;
     
     const xScale = d3.scaleLinear()
       .domain([xExtent[0] - xPadding, xExtent[1] + xPadding])
@@ -185,7 +177,7 @@ export function ScatterPlot({
       const [[x0, y0], [x1, y1]] = selection;
       
       // Minimum selection size check
-      if (Math.abs(x1 - x0) < 20 || Math.abs(y1 - y0) < 20) {
+      if (Math.abs(x1 - x0) < CONSTANTS.MIN_SELECTION_SIZE || Math.abs(y1 - y0) < CONSTANTS.MIN_SELECTION_SIZE) {
         brushGroup.call(brush.move, null);
         return;
       }
@@ -356,7 +348,7 @@ export function ScatterPlot({
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-muted-foreground">
-            {hasCoordinates ? 'マップを更新中...' : 'データを読み込み中...'}
+            {hasCoordinates ? CONSTANTS.MESSAGES.INFO.UPDATING_MAP : CONSTANTS.MESSAGES.INFO.LOADING_DATA}
           </p>
         </div>
       </div>
@@ -382,9 +374,9 @@ export function ScatterPlot({
               />
             </svg>
           </div>
-          <h3>X軸とY軸を入力してください</h3>
+          <h3>{CONSTANTS.MESSAGES.INFO.ENTER_AXES}</h3>
           <p className="text-muted-foreground mt-2">
-            上部の入力フィールドでX軸とY軸を設定し、「マップ作成」ボタンを押してください。
+            {CONSTANTS.MESSAGES.INFO.AXES_DESCRIPTION}
           </p>
         </div>
       </div>
