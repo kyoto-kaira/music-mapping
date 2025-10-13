@@ -1,34 +1,9 @@
-// 音楽関連の型定義
-export interface Song {
-  id: string;
-  title: string;
-  artist: string;
-  album?: string;
-  spotifyUrl?: string;
-  previewUrl?: string;
-  imageUrl?: string;
-  x?: number;
-  y?: number;
-}
-
-export interface MapAxes {
-  xAxis: string;
-  yAxis: string;
-}
-
-export interface SearchResult {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  imageUrl: string;
-  spotifyUrl: string;
-}
-
-export interface SongPosition {
-  x: number;
-  y: number;
-}
+// 共通型を再エクスポート
+export type {
+    AddSongRequest, ApiResponse,
+    CreateMapRequest, CreateMapResponse, DeleteSongResponse, MapAxes,
+    SearchResult, Song, SongPosition
+} from '../../shared/types';
 
 // コンポーネントのプロパティ型定義
 export interface ScatterPlotProps {
@@ -65,22 +40,6 @@ export interface FloatingCardProps {
   onRemove: (songId: string) => void;
   onClose: () => void;
   isNewlyAdded?: boolean;
-}
-
-// API関連の型定義
-export interface ApiResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-}
-
-export interface CreateMapRequest {
-  xAxis: string;
-  yAxis: string;
-}
-
-export interface AddSongRequest {
-  song: Omit<Song, 'x' | 'y'>;
 }
 
 // 状態管理の型定義

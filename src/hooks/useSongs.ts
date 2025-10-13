@@ -1,17 +1,8 @@
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
+import { apiClient } from '../api/client';
 import { CONSTANTS } from '../constants';
-import {
-    MOCK_SEARCH_RESULTS,
-    MOCK_SONGS,
-    addCoordinatesToSong,
-    searchSongs,
-    simulateMapCreation,
-    simulateSearch,
-    simulateSongAddition,
-    simulateSongRemoval
-} from '../data/mockData';
-import { MapAxes, Song, SongPosition } from '../types';
+import { MapAxes, SearchResult, Song, SongPosition } from '../types';
 
 export const useSongs = () => {
   const [songs, setSongs] = useState<Song[]>([]);
@@ -20,9 +11,14 @@ export const useSongs = () => {
   const loadInitialSongs = useCallback(async () => {
     setIsLoading(true);
     try {
-      await simulateApiCall(CONSTANTS.API_SIMULATION_DELAYS.INITIAL_LOAD);
-      setSongs(MOCK_SONGS);
+      const response = await apiClient.getSongs();
+      if (response.success) {
+        setSongs(response.data);
+      } else {
+        throw new Error(response.message || 'Failed to load songs');
+      }
     } catch (error) {
+      console.error('Error loading initial songs:', error);
       toast.error(CONSTANTS.MESSAGES.ERROR.INITIAL_LOAD_FAILED);
     } finally {
       setIsLoading(false);
@@ -37,35 +33,35 @@ export const useSongs = () => {
 
     setIsLoading(true);
     try {
-      await simulateMapCreation();
-      
-      const updatedSongs = songs.map(song => ({
-        ...song,
-        x: Math.random() * CONSTANTS.COORDINATE_RANGE,
-        y: Math.random() * CONSTANTS.COORDINATE_RANGE,
-      }));
-
-      setSongs(updatedSongs);
-      toast.success(CONSTANTS.MESSAGES.SUCCESS.MAP_CREATED);
-      return true;
+      const response = await apiClient.createMap(axes);
+      if (response.success) {
+        setSongs(response.data.songs);
+        toast.success(CONSTANTS.MESSAGES.SUCCESS.MAP_CREATED);
+        return true;
+      } else {
+        throw new Error(response.message || 'Failed to create map');
+      }
     } catch (error) {
+      console.error('Error creating map:', error);
       toast.error(CONSTANTS.MESSAGES.ERROR.MAP_CREATION_FAILED);
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [songs]);
+  }, []);
 
   const addSong = useCallback(async (newSong: Omit<Song, 'x' | 'y'>) => {
     try {
-      await simulateSongAddition();
-      
-      const songWithCoordinates = addCoordinatesToSong(newSong);
-      setSongs(prev => [...prev, songWithCoordinates]);
-      
-      toast.success(CONSTANTS.MESSAGES.SUCCESS.SONG_ADDED);
-      return songWithCoordinates;
+      const response = await apiClient.addSong(newSong);
+      if (response.success) {
+        setSongs(prev => [...prev, response.data]);
+        toast.success(CONSTANTS.MESSAGES.SUCCESS.SONG_ADDED);
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to add song');
+      }
     } catch (error) {
+      console.error('Error adding song:', error);
       toast.error(CONSTANTS.MESSAGES.ERROR.SONG_ADDITION_FAILED);
       return null;
     }
@@ -73,11 +69,16 @@ export const useSongs = () => {
 
   const removeSong = useCallback(async (songId: string) => {
     try {
-      await simulateSongRemoval();
-      setSongs(prev => prev.filter(song => song.id !== songId));
-      toast.success(CONSTANTS.MESSAGES.SUCCESS.SONG_REMOVED);
-      return true;
+      const response = await apiClient.removeSong(songId);
+      if (response.success) {
+        setSongs(prev => prev.filter(song => song.id !== songId));
+        toast.success(CONSTANTS.MESSAGES.SUCCESS.SONG_REMOVED);
+        return true;
+      } else {
+        throw new Error(response.message || 'Failed to remove song');
+      }
     } catch (error) {
+      console.error('Error removing song:', error);
       toast.error(CONSTANTS.MESSAGES.ERROR.SONG_REMOVAL_FAILED);
       return false;
     }
@@ -95,7 +96,7 @@ export const useSongs = () => {
 
 export const useSongSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<typeof MOCK_SEARCH_RESULTS>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   const performSearch = useCallback(async (query?: string) => {
@@ -107,10 +108,14 @@ export const useSongSearch = () => {
 
     setIsSearching(true);
     try {
-      await simulateSearch();
-      const filteredResults = searchSongs(searchTerm, MOCK_SEARCH_RESULTS);
-      setSearchResults(filteredResults);
+      const response = await apiClient.searchSongs(searchTerm);
+      if (response.success) {
+        setSearchResults(response.data);
+      } else {
+        throw new Error(response.message || 'Failed to search songs');
+      }
     } catch (error) {
+      console.error('Error searching songs:', error);
       toast.error(CONSTANTS.MESSAGES.ERROR.SEARCH_FAILED);
     } finally {
       setIsSearching(false);
@@ -156,9 +161,4 @@ export const useSongSelection = () => {
     clearSelection,
     markAsNewlyAdded,
   };
-};
-
-// API呼び出しのシミュレーション関数
-const simulateApiCall = async (delay: number = CONSTANTS.API_SIMULATION_DELAYS.INITIAL_LOAD): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, delay));
 };

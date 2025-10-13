@@ -1,7 +1,6 @@
 import * as d3 from 'd3';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CONSTANTS } from '../constants';
-import { filterSongsWithCoordinates } from '../data/mockData';
 import { ScatterPlotProps } from '../types';
 
 export function ScatterPlot({ 
@@ -35,7 +34,7 @@ export function ScatterPlot({
   const [zoomLevel, setZoomLevel] = useState(1);
 
   const data = useMemo(() => {
-    return filterSongsWithCoordinates(songs);
+    return songs.filter(song => song.x !== undefined && song.y !== undefined);
   }, [songs]);
 
   useEffect(() => {
@@ -54,7 +53,7 @@ export function ScatterPlot({
     svg.selectAll("*").remove();
 
     // Filter songs with coordinates
-    const data = filterSongsWithCoordinates(songs);
+    const data = songs.filter(song => song.x !== undefined && song.y !== undefined);
     if (data.length === 0) return;
 
     // Set up scales with 1:1 aspect ratio

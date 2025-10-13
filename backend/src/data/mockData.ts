@@ -1,7 +1,6 @@
-import { CONSTANTS } from '../constants';
-import { SearchResult, Song } from '../types';
+import { SearchResult, Song } from '../../shared/types';
 
-// モックデータ
+// モックデータ（元のフロントエンドから移動）
 export const MOCK_SONGS: Song[] = [
   {
     id: "1",
@@ -77,10 +76,10 @@ export const MOCK_SEARCH_RESULTS: SearchResult[] = [
   }
 ];
 
-// ユーティリティ関数
+// 座標生成のユーティリティ関数
 export const generateRandomCoordinates = (): { x: number; y: number } => ({
-  x: Math.random() * CONSTANTS.COORDINATE_RANGE,
-  y: Math.random() * CONSTANTS.COORDINATE_RANGE,
+  x: Math.random() * 100,
+  y: Math.random() * 100,
 });
 
 export const addCoordinatesToSong = (song: Omit<Song, 'x' | 'y'>): Song => ({
@@ -88,9 +87,7 @@ export const addCoordinatesToSong = (song: Omit<Song, 'x' | 'y'>): Song => ({
   ...generateRandomCoordinates(),
 });
 
-export const filterSongsWithCoordinates = (songs: Song[]): Song[] => 
-  songs.filter(song => song.x !== undefined && song.y !== undefined);
-
+// 検索関数
 export const searchSongs = (query: string, songs: SearchResult[]): SearchResult[] => {
   if (!query.trim()) return [];
   
@@ -99,25 +96,4 @@ export const searchSongs = (query: string, songs: SearchResult[]): SearchResult[
     song.title.toLowerCase().includes(lowerQuery) ||
     song.artist.toLowerCase().includes(lowerQuery)
   );
-};
-
-// API シミュレーション関数
-export const simulateApiCall = async (delay: number = CONSTANTS.API_SIMULATION_DELAYS.INITIAL_LOAD): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, delay));
-};
-
-export const simulateMapCreation = async (): Promise<void> => {
-  await simulateApiCall(CONSTANTS.API_SIMULATION_DELAYS.MAP_CREATION);
-};
-
-export const simulateSongAddition = async (): Promise<void> => {
-  await simulateApiCall(CONSTANTS.API_SIMULATION_DELAYS.SONG_ADDITION);
-};
-
-export const simulateSongRemoval = async (): Promise<void> => {
-  await simulateApiCall(CONSTANTS.API_SIMULATION_DELAYS.SONG_REMOVAL);
-};
-
-export const simulateSearch = async (): Promise<void> => {
-  await simulateApiCall(CONSTANTS.API_SIMULATION_DELAYS.SEARCH);
 };
