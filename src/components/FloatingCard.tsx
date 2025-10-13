@@ -21,19 +21,32 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
     
-    // Position near the clicked point, but adjust to stay on screen
-    let x = position.x + 20; // Offset slightly from click point
-    let y = position.y - rect.height / 2; // Center vertically around click point
+    // Get the SVG container's position to convert SVG coordinates to screen coordinates
+    const svgContainer = document.querySelector('.h-full.relative') as HTMLElement;
+    const svgRect = svgContainer?.getBoundingClientRect();
     
-    // Adjust if card would go off screen
-    if (x + rect.width > windowWidth - 20) {
-      x = position.x - rect.width - 20; // Show on left side instead
+    if (!svgRect) return;
+    
+    // Convert SVG coordinates to screen coordinates
+    const screenX = svgRect.left + position.x;
+    const screenY = svgRect.top + position.y;
+    
+    // Calculate optimal position with better spacing
+    const offset = 15;
+    const margin = 20;
+    
+    // Try to position to the right first, then left if not enough space
+    let x = screenX + offset;
+    let y = screenY - rect.height / 2;
+    
+    // Check if card would go off screen horizontally
+    if (x + rect.width > windowWidth - margin) {
+      x = screenX - rect.width - offset; // Show on left side
     }
-    if (y < 20) y = 20;
-    if (y + rect.height > windowHeight - 20) {
-      y = windowHeight - rect.height - 20;
-    }
-    if (x < 20) x = 20;
+    
+    // Ensure minimum margins
+    x = Math.max(margin, Math.min(x, windowWidth - rect.width - margin));
+    y = Math.max(margin, Math.min(y, windowHeight - rect.height - margin));
     
     setCardPosition({ x, y });
   }, [position, song.id]);
@@ -64,6 +77,11 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
     });
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent click event from bubbling up to global click handler
+    e.stopPropagation();
+  };
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
     
@@ -78,7 +96,7 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
     setIsDragging(false);
   };
 
-  // Global mouse events for dragging
+  // Global mouse events for dragging and outside click detection
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
@@ -93,30 +111,46 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
       setIsDragging(false);
     };
 
+    const handleGlobalClick = (e: MouseEvent) => {
+      // Don't close if dragging
+      if (isDragging) return;
+      
+      // Check if click is outside the card
+      if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+
     if (isDragging) {
       document.addEventListener('mousemove', handleGlobalMouseMove);
       document.addEventListener('mouseup', handleGlobalMouseUp);
     }
 
+    // Add click listener for outside click detection
+    document.addEventListener('click', handleGlobalClick);
+
     return () => {
       document.removeEventListener('mousemove', handleGlobalMouseMove);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.removeEventListener('click', handleGlobalClick);
     };
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragOffset, onClose]);
 
   return (
     <div 
       ref={cardRef}
-      className={`fixed z-50 animate-in fade-in-0 zoom-in-95 duration-200 ${
+      className={`fixed z-50 animate-in fade-in-0 zoom-in-95 duration-300 ease-out ${
         isDragging ? 'cursor-grabbing' : 'cursor-grab'
       }`}
       style={{
         left: `${cardPosition.x}px`,
         top: `${cardPosition.y}px`,
+        transform: 'translateZ(0)', // Enable hardware acceleration
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
+      onClick={handleCardClick}
     >
       <Card className="w-80 shadow-lg border-2 select-none">
         <CardContent className="p-4">

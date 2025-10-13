@@ -281,9 +281,17 @@ export function ScatterPlot({
     circles.on('click', function(event, d) {
       event.stopPropagation();
       event.preventDefault();
+      
+      // Get the SVG element's position relative to the viewport
+      const svgRect = svgRef.current!.getBoundingClientRect();
+      
+      // Calculate position relative to the SVG container
+      const svgX = event.clientX - svgRect.left;
+      const svgY = event.clientY - svgRect.top;
+      
       onSongSelect(d, { 
-        x: event.clientX, 
-        y: event.clientY 
+        x: svgX, 
+        y: svgY 
       });
     });
 
