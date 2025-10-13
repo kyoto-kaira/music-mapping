@@ -1,6 +1,6 @@
 
   {
-      "name": "Music Scatter Plot App",
+      "name": "music-scatter-plot-app",
       "version": "0.1.0",
       "private": true,
       "dependencies": {
