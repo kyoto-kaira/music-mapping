@@ -8,23 +8,7 @@ import {
     Song
 } from '../../shared/types';
 
-// API_BASE_URLを環境に応じて動的に設定
-const getApiBaseUrl = () => {
-  // 環境変数が設定されている場合はそれを使用
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
-  
-  // 本番環境（Vercel）の場合は現在のドメインを使用
-  if (import.meta.env.PROD) {
-    return `${window.location.origin}/api`;
-  }
-  
-  // 開発環境の場合はlocalhostを使用
-  return 'http://localhost:3001/api';
-};
-
-const API_BASE_URL = getApiBaseUrl();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 class ApiClient {
   private async request<T>(
