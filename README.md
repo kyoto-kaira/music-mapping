@@ -40,6 +40,35 @@ npm run dev:frontend  # フロントエンドのみ
 npm run dev:backend   # バックエンドのみ
 ```
 
+### 4. プロダクションビルド
+
+```bash
+# フロントエンドとバックエンドを同時にビルド
+npm run build
+
+# または個別にビルド
+npm run build:frontend  # フロントエンドのみ
+npm run build:backend   # バックエンドのみ
+```
+
+### 5. プロダクション起動
+
+```bash
+# ビルドしてからプロダクション起動（1回のコマンド）
+npm run start
+
+# または個別に起動
+npm run start:frontend  # フロントエンドのみ（vite preview）
+npm run start:backend   # バックエンドのみ
+```
+
+### 6. 完全セットアップ（初回のみ）
+
+```bash
+# 依存関係インストール + ビルド + プロダクション起動
+npm run build:all && npm run start
+```
+
 ## API エンドポイント
 
 - `GET /api/songs` - 初期曲一覧の取得

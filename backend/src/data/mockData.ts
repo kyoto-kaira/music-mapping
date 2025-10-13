@@ -1,4 +1,4 @@
-import { SearchResult, Song } from '../../shared/types';
+import { SearchResult, Song } from '../../../shared/types';
 
 // モックデータ（元のフロントエンドから移動）
 export const MOCK_SONGS: Song[] = [

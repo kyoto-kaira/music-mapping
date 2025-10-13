@@ -11,8 +11,20 @@ const PORT = process.env.PORT || 3001;
 
 // ミドルウェア
 app.use(helmet());
+
+// 許可するフロントエンドのオリジン（開発: 5173 / プレビュー: 4173）
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:5173',
+  'http://localhost:4173'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // ブラウザ外(例えばcurl)や同一オリジンの場合は許可
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(morgan('combined'));
