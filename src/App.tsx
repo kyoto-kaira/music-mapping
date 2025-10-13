@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { FloatingCard } from "./components/FloatingCard";
 import { ScatterPlot } from "./components/ScatterPlot";
 import { Sidebar } from "./components/Sidebar";
@@ -30,6 +30,26 @@ export default function App() {
   useEffect(() => {
     loadInitialSongs();
   }, [loadInitialSongs]);
+
+  // グローバルキーボードショートカット
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + K でサイドバーをトグル
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSidebarOpen(!sidebarOpen);
+      }
+      
+      // Ctrl/Cmd + R で選択をクリア
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        clearSelection();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [sidebarOpen, clearSelection]);
 
   const handleCreateMap = async (axes: MapAxes) => {
     const success = await createMap(axes);

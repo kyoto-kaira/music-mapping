@@ -121,20 +121,33 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
       }
     };
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Close card on Escape key
+      if (e.key === 'Escape') {
+        onClose();
+      }
+      // Remove song on Delete key
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        onRemove(song.id);
+      }
+    };
+
     if (isDragging) {
       document.addEventListener('mousemove', handleGlobalMouseMove);
       document.addEventListener('mouseup', handleGlobalMouseUp);
     }
 
-    // Add click listener for outside click detection
+    // Add event listeners
     document.addEventListener('click', handleGlobalClick);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('mousemove', handleGlobalMouseMove);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
       document.removeEventListener('click', handleGlobalClick);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isDragging, dragOffset, onClose]);
+  }, [isDragging, dragOffset, onClose, onRemove, song.id]);
 
   return (
     <div 
@@ -214,10 +227,12 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
               variant="destructive"
               size="sm"
               onClick={handleRemove}
+              title="削除 (Deleteキー)"
             >
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
+          
         </CardContent>
       </Card>
     </div>

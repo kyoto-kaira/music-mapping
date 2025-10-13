@@ -22,11 +22,17 @@ export function ScatterPlot({
     xDomain: [number, number] | null;
     yDomain: [number, number] | null;
     isZoomed: boolean;
+    scale: number;
   }>({
     xDomain: null,
     yDomain: null,
-    isZoomed: false
+    isZoomed: false,
+    scale: 1
   });
+
+  // ズーム制御のための状態
+  const [currentScale, setCurrentScale] = useState(1);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   const data = useMemo(() => {
     return filterSongsWithCoordinates(songs);
@@ -51,22 +57,44 @@ export function ScatterPlot({
     const data = filterSongsWithCoordinates(songs);
     if (data.length === 0) return;
 
-    // Set up scales
+    // Set up scales with 1:1 aspect ratio
     const xExtent = d3.extent(data, d => d.x!) as [number, number];
     const yExtent = d3.extent(data, d => d.y!) as [number, number];
     
-    // Add padding to extents
-    const xPadding = (xExtent[1] - xExtent[0]) * CONSTANTS.MAP_PADDING || 10;
-    const yPadding = (yExtent[1] - yExtent[0]) * CONSTANTS.MAP_PADDING || 10;
+    // Calculate data range
+    const xRange = xExtent[1] - xExtent[0];
+    const yRange = yExtent[1] - yExtent[0];
+    
+    // Determine the larger range to maintain 1:1 aspect ratio
+    const maxRange = Math.max(xRange, yRange);
+    
+    // Calculate center points
+    const xCenter = (xExtent[0] + xExtent[1]) / 2;
+    const yCenter = (yExtent[0] + yExtent[1]) / 2;
+    
+    // Add padding
+    const padding = maxRange * (CONSTANTS.MAP_PADDING || 0.1);
+    
+    // Create square domains centered on data
+    const xDomainSize = maxRange + padding;
+    const yDomainSize = maxRange + padding;
+    
+    const baseXDomain: [number, number] = [xCenter - xDomainSize / 2, xCenter + xDomainSize / 2];
+    const baseYDomain: [number, number] = [yCenter - yDomainSize / 2, yCenter + yDomainSize / 2];
     
     // ズーム状態を保持している場合はそれを使用、そうでなければデフォルト範囲を使用
     const initialXDomain = zoomStateRef.current.isZoomed && zoomStateRef.current.xDomain 
       ? zoomStateRef.current.xDomain 
-      : [xExtent[0] - xPadding, xExtent[1] + xPadding];
+      : baseXDomain;
     
     const initialYDomain = zoomStateRef.current.isZoomed && zoomStateRef.current.yDomain 
       ? zoomStateRef.current.yDomain 
-      : [yExtent[0] - yPadding, yExtent[1] + yPadding];
+      : baseYDomain;
+    
+    // Calculate current scale based on domain size
+    const currentDomainSize = initialXDomain[1] - initialXDomain[0];
+    const currentScale = maxRange / currentDomainSize;
+    setCurrentScale(currentScale);
     
     const xScale = d3.scaleLinear()
       .domain(initialXDomain)
@@ -262,6 +290,112 @@ export function ScatterPlot({
         .text(mapAxes.yAxis);
     }
 
+    // Zoom and pan functionality
+    let isPanning = false;
+    let panStartX = 0;
+    let panStartY = 0;
+    let panStartXDomain: [number, number];
+    let panStartYDomain: [number, number];
+
+    // Mouse wheel zoom
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      
+      const zoomFactor = event.deltaY > 0 ? 1.1 : 0.9;
+      const mouseX = event.offsetX - margin.left;
+      const mouseY = event.offsetY - margin.top;
+      
+      // Convert mouse position to data coordinates
+      const mouseDataX = xScale.invert(mouseX);
+      const mouseDataY = yScale.invert(mouseY);
+      
+      // Calculate new domain size
+      const currentXRange = xScale.domain()[1] - xScale.domain()[0];
+      const currentYRange = yScale.domain()[1] - yScale.domain()[0];
+      const newXRange = currentXRange / zoomFactor;
+      const newYRange = currentYRange / zoomFactor;
+      
+      // Calculate new domains centered on mouse position
+      const newXDomain: [number, number] = [
+        mouseDataX - (mouseDataX - xScale.domain()[0]) * (newXRange / currentXRange),
+        mouseDataX + (xScale.domain()[1] - mouseDataX) * (newXRange / currentXRange)
+      ];
+      
+      const newYDomain: [number, number] = [
+        mouseDataY - (mouseDataY - yScale.domain()[0]) * (newYRange / currentYRange),
+        mouseDataY + (yScale.domain()[1] - mouseDataY) * (newYRange / currentYRange)
+      ];
+      
+      // Update scales
+      xScale.domain(newXDomain);
+      yScale.domain(newYDomain);
+      
+      // Update zoom state
+      zoomStateRef.current = {
+        xDomain: newXDomain,
+        yDomain: newYDomain,
+        isZoomed: true,
+        scale: zoomStateRef.current.scale * zoomFactor
+      };
+      
+      setZoomLevel(zoomStateRef.current.scale);
+      
+      // Update visualization
+      updateVisualization();
+    };
+
+    // Pan functionality
+    const handleMouseDown = (event: MouseEvent) => {
+      if (event.button === 1 || (event.button === 0 && event.ctrlKey)) { // Middle mouse or Ctrl+left click
+        isPanning = true;
+        panStartX = event.clientX;
+        panStartY = event.clientY;
+        panStartXDomain = [...xScale.domain()] as [number, number];
+        panStartYDomain = [...yScale.domain()] as [number, number];
+        backgroundRect.style('cursor', 'grabbing');
+      }
+    };
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (isPanning) {
+        const deltaX = event.clientX - panStartX;
+        const deltaY = event.clientY - panStartY;
+        
+        // Convert pixel delta to data delta
+        const dataDeltaX = (deltaX / width) * (panStartXDomain[1] - panStartXDomain[0]);
+        const dataDeltaY = (deltaY / height) * (panStartYDomain[1] - panStartYDomain[0]);
+        
+        // Update domains
+        const newXDomain: [number, number] = [
+          panStartXDomain[0] - dataDeltaX,
+          panStartXDomain[1] - dataDeltaX
+        ];
+        
+        const newYDomain: [number, number] = [
+          panStartYDomain[0] + dataDeltaY, // Y is inverted in SVG
+          panStartYDomain[1] + dataDeltaY
+        ];
+        
+        xScale.domain(newXDomain);
+        yScale.domain(newYDomain);
+        
+        // Update zoom state
+        zoomStateRef.current = {
+          xDomain: newXDomain,
+          yDomain: newYDomain,
+          isZoomed: true,
+          scale: zoomStateRef.current.scale
+        };
+        
+        updateVisualization();
+      }
+    };
+
+    const handleMouseUp = () => {
+      isPanning = false;
+      backgroundRect.style('cursor', 'crosshair');
+    };
+
     // Brush for area selection (added early so points render on top)
     let brush: any;
     let brushGroup: any;
@@ -293,16 +427,39 @@ export function ScatterPlot({
       const dataY0 = yScale.invert(y1); // y1 for y0 because SVG y is flipped
       const dataY1 = yScale.invert(y0); // y0 for y1 because SVG y is flipped
 
-      // Update scales to zoom to selection
-      xScale.domain([dataX0, dataX1]);
-      yScale.domain([dataY0, dataY1]);
+      // Calculate new domain size maintaining 1:1 aspect ratio
+      const selectionXRange = dataX1 - dataX0;
+      const selectionYRange = dataY1 - dataY0;
+      const maxSelectionRange = Math.max(selectionXRange, selectionYRange);
+      
+      // Center the selection
+      const selectionXCenter = (dataX0 + dataX1) / 2;
+      const selectionYCenter = (dataY0 + dataY1) / 2;
+      
+      // Create square domain
+      const newXDomain: [number, number] = [
+        selectionXCenter - maxSelectionRange / 2,
+        selectionXCenter + maxSelectionRange / 2
+      ];
+      
+      const newYDomain: [number, number] = [
+        selectionYCenter - maxSelectionRange / 2,
+        selectionYCenter + maxSelectionRange / 2
+      ];
+
+      // Update scales
+      xScale.domain(newXDomain);
+      yScale.domain(newYDomain);
 
       // ズーム状態を保存
       zoomStateRef.current = {
-        xDomain: [dataX0, dataX1],
-        yDomain: [dataY0, dataY1],
-        isZoomed: true
+        xDomain: newXDomain,
+        yDomain: newYDomain,
+        isZoomed: true,
+        scale: zoomStateRef.current.scale * (maxRange / maxSelectionRange)
       };
+      
+      setZoomLevel(zoomStateRef.current.scale);
 
       // Update visualization with animation
       updateVisualization();
@@ -327,6 +484,14 @@ export function ScatterPlot({
     // Style brush handles
     brushGroup.selectAll('.handle')
       .style('fill', 'rgba(59, 130, 246, 0.8)');
+
+    // Add event listeners
+    backgroundRect
+      .on('wheel', handleWheel)
+      .on('mousedown', handleMouseDown)
+      .on('mousemove', handleMouseMove)
+      .on('mouseup', handleMouseUp)
+      .on('mouseleave', handleMouseUp);
 
     // Add points (after brush so they render on top)
     const circles = g.selectAll('.point')
@@ -467,15 +632,18 @@ export function ScatterPlot({
 
     // Double-click to reset zoom
     svg.on('dblclick', () => {
-      xScale.domain([xExtent[0] - xPadding, xExtent[1] + xPadding]);
-      yScale.domain([yExtent[0] - yPadding, yExtent[1] + yPadding]);
+      xScale.domain(baseXDomain);
+      yScale.domain(baseYDomain);
       
       // ズーム状態をリセット
       zoomStateRef.current = {
         xDomain: null,
         yDomain: null,
-        isZoomed: false
+        isZoomed: false,
+        scale: 1
       };
+      
+      setZoomLevel(1);
       
       updateVisualization();
     });
@@ -543,13 +711,173 @@ export function ScatterPlot({
     );
   }
 
+  // Zoom control functions
+  const zoomIn = () => {
+    if (!svgRef.current || !containerRef.current) return;
+    
+    const svg = d3.select(svgRef.current);
+    const container = containerRef.current;
+    const rect = container.getBoundingClientRect();
+    const margin = { top: 20, right: 20, bottom: 60, left: 60 };
+    const width = rect.width - margin.left - margin.right;
+    const height = rect.height - margin.top - margin.bottom;
+    
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    // Get current scales
+    const currentXDomain = zoomStateRef.current.xDomain || [0, 1];
+    const currentYDomain = zoomStateRef.current.yDomain || [0, 1];
+    
+    const xScale = d3.scaleLinear().domain(currentXDomain).range([0, width]);
+    const yScale = d3.scaleLinear().domain(currentYDomain).range([height, 0]);
+    
+    const centerDataX = xScale.invert(centerX);
+    const centerDataY = yScale.invert(centerY);
+    
+    const zoomFactor = 0.8;
+    const currentXRange = currentXDomain[1] - currentXDomain[0];
+    const currentYRange = currentYDomain[1] - currentYDomain[0];
+    const newXRange = currentXRange * zoomFactor;
+    const newYRange = currentYRange * zoomFactor;
+    
+    const newXDomain: [number, number] = [
+      centerDataX - newXRange / 2,
+      centerDataX + newXRange / 2
+    ];
+    
+    const newYDomain: [number, number] = [
+      centerDataY - newYRange / 2,
+      centerDataY + newYRange / 2
+    ];
+    
+    zoomStateRef.current = {
+      xDomain: newXDomain,
+      yDomain: newYDomain,
+      isZoomed: true,
+      scale: zoomStateRef.current.scale / zoomFactor
+    };
+    
+    setZoomLevel(zoomStateRef.current.scale);
+    
+    // Trigger re-render
+    const event = new Event('resize');
+    window.dispatchEvent(event);
+  };
+
+  const zoomOut = () => {
+    if (!svgRef.current || !containerRef.current) return;
+    
+    const svg = d3.select(svgRef.current);
+    const container = containerRef.current;
+    const rect = container.getBoundingClientRect();
+    const margin = { top: 20, right: 20, bottom: 60, left: 60 };
+    const width = rect.width - margin.left - margin.right;
+    const height = rect.height - margin.top - margin.bottom;
+    
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    // Get current scales
+    const currentXDomain = zoomStateRef.current.xDomain || [0, 1];
+    const currentYDomain = zoomStateRef.current.yDomain || [0, 1];
+    
+    const xScale = d3.scaleLinear().domain(currentXDomain).range([0, width]);
+    const yScale = d3.scaleLinear().domain(currentYDomain).range([height, 0]);
+    
+    const centerDataX = xScale.invert(centerX);
+    const centerDataY = yScale.invert(centerY);
+    
+    const zoomFactor = 1.25;
+    const currentXRange = currentXDomain[1] - currentXDomain[0];
+    const currentYRange = currentYDomain[1] - currentYDomain[0];
+    const newXRange = currentXRange * zoomFactor;
+    const newYRange = currentYRange * zoomFactor;
+    
+    const newXDomain: [number, number] = [
+      centerDataX - newXRange / 2,
+      centerDataX + newXRange / 2
+    ];
+    
+    const newYDomain: [number, number] = [
+      centerDataY - newYRange / 2,
+      centerDataY + newYRange / 2
+    ];
+    
+    zoomStateRef.current = {
+      xDomain: newXDomain,
+      yDomain: newYDomain,
+      isZoomed: true,
+      scale: zoomStateRef.current.scale * zoomFactor
+    };
+    
+    setZoomLevel(zoomStateRef.current.scale);
+    
+    // Trigger re-render
+    const event = new Event('resize');
+    window.dispatchEvent(event);
+  };
+
+  const resetZoom = () => {
+    zoomStateRef.current = {
+      xDomain: null,
+      yDomain: null,
+      isZoomed: false,
+      scale: 1
+    };
+    
+    setZoomLevel(1);
+    
+    // Trigger re-render
+    const event = new Event('resize');
+    window.dispatchEvent(event);
+  };
+
   return (
     <div ref={containerRef} className="h-full relative">
       <svg ref={svgRef} className="w-full h-full" />
       
-      <div className="absolute bottom-4 right-4 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
-        ドラッグで領域選択してズーム • ダブルクリックで元のサイズに戻る • クリックで選択
+      {/* Zoom Controls */}
+      <div className="absolute top-4 right-4 flex flex-col gap-2">
+        <button
+          onClick={zoomIn}
+          className="w-10 h-10 bg-background/90 hover:bg-background border border-border rounded-lg flex items-center justify-center shadow-lg transition-colors"
+          title="ズームイン"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        </button>
+        <button
+          onClick={zoomOut}
+          className="w-10 h-10 bg-background/90 hover:bg-background border border-border rounded-lg flex items-center justify-center shadow-lg transition-colors"
+          title="ズームアウト"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
+          </svg>
+        </button>
+        <button
+          onClick={resetZoom}
+          className="w-10 h-10 bg-background/90 hover:bg-background border border-border rounded-lg flex items-center justify-center shadow-lg transition-colors"
+          title="リセット"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
       </div>
+      
+      {/* Scale Indicator */}
+      <div className="absolute top-4 left-4 bg-background/90 border border-border rounded-lg px-3 py-2 shadow-lg">
+        <div className="text-sm font-medium text-foreground">
+          スケール: {zoomLevel.toFixed(2)}x
+        </div>
+        <div className="text-xs text-muted-foreground">
+          アスペクト比: 1:1
+        </div>
+      </div>
+      
     </div>
   );
 }
