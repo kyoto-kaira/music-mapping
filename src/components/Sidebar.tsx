@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { CONSTANTS } from '../constants';
 import { useSongSearch } from '../hooks/useSongs';
 import { SidebarProps } from '../types';

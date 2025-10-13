@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { CONSTANTS } from '../constants';
 import {
     MOCK_SEARCH_RESULTS,
