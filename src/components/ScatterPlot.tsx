@@ -450,7 +450,7 @@ export function ScatterPlot({
       xScale.domain(newXDomain);
       yScale.domain(newYDomain);
 
-      // ズーム状態を保存
+      // Save zoom state
       zoomStateRef.current = {
         xDomain: newXDomain,
         yDomain: newYDomain,
@@ -634,7 +634,7 @@ export function ScatterPlot({
       xScale.domain(baseXDomain);
       yScale.domain(baseYDomain);
       
-      // ズーム状態をリセット
+      // Reset zoom state
       zoomStateRef.current = {
         xDomain: null,
         yDomain: null,
