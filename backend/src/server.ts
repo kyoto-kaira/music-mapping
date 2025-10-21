@@ -12,10 +12,11 @@ const PORT = process.env.PORT || 3001;
 // ミドルウェア
 app.use(helmet());
 
-// 許可するフロントエンドのオリジン（開発: 5173 / プレビュー: 4173）
+// 許可するフロントエンドのオリジン（開発: 5173 / プレビュー: 4173 / 本番: Vercelドメイン）
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5173',
-  'http://localhost:4173'
+  'http://localhost:4173',
+  'https://music-mapping.vercel.app'
 ];
 
 app.use(cors({
@@ -60,7 +61,13 @@ app.use('*', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-});
+// Vercelではapp.listen()を実行しない
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  });
+}
+
+// Vercel用にappをエクスポート
+export default app;

@@ -1,14 +1,17 @@
 import {
-    AddSongRequest,
-    ApiResponse,
-    CreateMapRequest,
-    CreateMapResponse,
-    DeleteSongResponse,
-    SearchResult,
-    Song
+  AddSongRequest,
+  ApiResponse,
+  CreateMapRequest,
+  CreateMapResponse,
+  DeleteSongResponse,
+  SearchResult,
+  Song
 } from '../../shared/types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+// 本番環境では相対パスを使用、開発環境では環境変数またはデフォルトURLを使用
+const API_BASE_URL = (import.meta as any).env.PROD 
+  ? '/api' 
+  : ((import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001/api');
 
 class ApiClient {
   private async request<T>(
