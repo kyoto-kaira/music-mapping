@@ -1,42 +1,14 @@
 {
-  "version": 2,
-  "builds": [
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "rewrites": [
     {
-      "src": "api/**/*.ts",
-      "use": "@vercel/node"
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
     },
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/search-songs",
-      "dest": "/api/search-songs.ts"
-    },
-    {
-      "src": "/api/add-song",
-      "dest": "/api/add-song.ts"
-    },
-    {
-      "src": "/api/create-map",
-      "dest": "/api/create-map.ts"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "/build/assets/$1"
-    },
-    {
-      "src": "/(favicon\\.ico|favicon\\.svg|logo\\.svg|apple-touch-icon\\.png)",
-      "dest": "/build/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/build/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
