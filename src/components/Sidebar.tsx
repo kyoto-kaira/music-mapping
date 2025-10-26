@@ -35,7 +35,7 @@ export function Sidebar({ isOpen, onToggle, onAddSong, hasCoordinates }: Sidebar
       album: result.album,
       imageUrl: result.imageUrl,
       spotifyUrl: result.spotifyUrl,
-      previewUrl: CONSTANTS.DEFAULT_PREVIEW_URL
+      previewUrl: result.previewUrl
     });
   };
 

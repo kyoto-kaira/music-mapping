@@ -25,6 +25,7 @@ export interface SearchResult {
   album: string;
   imageUrl: string;
   spotifyUrl: string;
+  previewUrl?: string;
 }
 
 export interface SongPosition {
