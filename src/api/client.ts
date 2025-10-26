@@ -1,12 +1,15 @@
 import { ApiResponse, CreateMapResponse, DeleteSongResponse, SearchResult, Song } from '../../shared/types';
-import { MOCK_SONGS } from '../data/mockData';
 
-// ローカルストレージでマップ状態を管理
-const STORAGE_KEY_MAP = 'music_mapping_map_state';
-const STORAGE_KEY_MAP_ID = 'music_mapping_map_id';
-const STORAGE_KEY_MAP_AXES = 'music_mapping_map_axes';
+// 環境判定：Vercel Functions が利用可能かどうか
+const isVercelFunctionsAvailable = () => {
+  // 本番環境（Vercel）または vercel dev 環境
+  return import.meta.env.PROD && typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+};
 
-// iTunes Search APIのレスポンス型
+// APIベースURL
+const API_BASE_URL = '';  // Vercelでは相対パス
+
+// iTunes Search API関連の型定義
 interface iTunesTrack {
   trackId: number;
   trackName: string;
@@ -22,286 +25,206 @@ interface iTunesSearchResponse {
   results: iTunesTrack[];
 }
 
-// 座標生成のためのリクエスト型
-interface CoordinateGenerationRequest {
-  previewUrl?: string;
-  xAxisLabel: string;
-  yAxisLabel: string;
-}
-
-// 座標生成関数（将来的にAIエンドポイントを呼び出す）
-async function generateCoordinates(request: CoordinateGenerationRequest): Promise<{ x: number; y: number }> {
-  // TODO: 将来的には以下のようにAIエンドポイントを呼び出す
-  // const response = await fetch('/api/generate-coordinates', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(request)
-  // });
-  // const data = await response.json();
-  // return { x: data.x, y: data.y };
-  
-  // 現状はランダム値を返す
+// エラーハンドリング用のヘルパー関数
+function handleApiError(error: any, defaultMessage: string): ApiResponse<any> {
+  console.error(defaultMessage, error);
   return {
-    x: Math.random() * 100,
-    y: Math.random() * 100,
+    success: false,
+    data: undefined,
+    message: error?.message || defaultMessage,
+    code: error?.code || 'API_ERROR',
   };
 }
 
 class ApiClient {
-  // iTunes APIから曲情報（特にpreviewUrl）を取得
-  private async fetchSongFromiTunes(title: string, artist: string): Promise<{ previewUrl?: string } | null> {
+  // 曲を追加（開発環境：ランダム座標 / 本番環境：AIで座標を計算）
+  async addSong(
+    song: Omit<Song, 'x' | 'y'>,
+    axes: { xAxis: string; yAxis: string }
+  ): Promise<ApiResponse<Song>> {
     try {
-      const query = `${title} ${artist}`;
-      const encodedQuery = encodeURIComponent(query.trim());
-      const url = `https://itunes.apple.com/search?term=${encodedQuery}&media=music&entity=song&limit=1`;
-      
-      const response = await fetch(url);
-      if (!response.ok) return null;
+      // Vercel Functions が利用できない環境ではランダムな座標を割り当て
+      if (!isVercelFunctionsAvailable()) {
+        const songWithCoordinates: Song = {
+          ...song,
+          x: Math.random() * 2 - 1, // -1 ~ 1
+          y: Math.random() * 2 - 1, // -1 ~ 1
+        };
+        return {
+          success: true,
+          data: songWithCoordinates,
+        };
+      }
 
-      const data: iTunesSearchResponse = await response.json();
-      if (data.results.length === 0) return null;
+      // Vercel環境ではAIで座標を計算
+      const response = await fetch(`${API_BASE_URL}/api/add-song`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          song,
+          xAxis: axes.xAxis,
+          yAxis: axes.yAxis,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        return {
+          success: false,
+          data: undefined,
+          message: data.message || '曲の追加に失敗しました',
+          code: data.code || 'SONG_ADDITION_FAILED',
+        };
+      }
 
       return {
-        previewUrl: data.results[0].previewUrl
+        success: true,
+        data: data.data,
       };
     } catch (error) {
-      console.error('Error fetching song from iTunes:', error);
-      return null;
+      return handleApiError(error, '曲の追加に失敗しました');
     }
   }
 
-  // 曲関連のAPI
-  async getSongs(): Promise<ApiResponse<Song[]>> {
-    const currentSongs = this.getCurrentSongs();
-    return {
-      success: true,
-      data: currentSongs.map(song => ({
-        ...song,
-        x: undefined,
-        y: undefined
-      }))
-    };
-  }
-
-  async addSong(song: Omit<Song, 'x' | 'y'>): Promise<ApiResponse<Song>> {
-    const currentSongs = this.getCurrentSongs();
-    const currentMapId = localStorage.getItem(STORAGE_KEY_MAP_ID);
-    
-    if (!currentMapId) {
-      return {
-        success: false,
-        data: undefined,
-        message: 'Map must be created before adding songs',
-        code: 'MAP_NOT_CREATED'
-      };
-    }
-
-    // 既存の曲かチェック
-    const existingSong = currentSongs.find(s => s.id === song.id);
-    if (existingSong) {
-      return {
-        success: false,
-        data: undefined,
-        message: 'すでにこの曲は追加されています',
-        code: 'SONG_ALREADY_EXISTS'
-      };
-    }
-
-    // 軸情報を取得
-    const axes = this.getCurrentAxes();
-    if (!axes) {
-      return {
-        success: false,
-        data: undefined,
-        message: 'Map axes not found',
-        code: 'AXES_NOT_FOUND'
-      };
-    }
-
-    // 座標を生成（プレビューURL、X軸、Y軸を使用）
-    const coordinates = await generateCoordinates({
-      previewUrl: song.previewUrl,
-      xAxisLabel: axes.xAxis,
-      yAxisLabel: axes.yAxis,
-    });
-
-    const songWithCoordinates: Song = {
-      ...song,
-      x: coordinates.x,
-      y: coordinates.y,
-    };
-
-    currentSongs.push(songWithCoordinates);
-    this.saveCurrentSongs(currentSongs);
-
-    return {
-      success: true,
-      data: songWithCoordinates
-    };
-  }
-
+  // 曲を削除（ダミー実装 - 実際はフロントエンドで管理）
   async removeSong(songId: string): Promise<ApiResponse<DeleteSongResponse>> {
-    const currentSongs = this.getCurrentSongs();
-    const songIndex = currentSongs.findIndex(song => song.id === songId);
-    
-    if (songIndex === -1) {
-      return {
-        success: false,
-        data: undefined,
-        message: 'Song not found',
-        code: 'SONG_NOT_FOUND'
-      };
-    }
-
-    currentSongs.splice(songIndex, 1);
-    this.saveCurrentSongs(currentSongs);
-
     return {
       success: true,
-      data: { id: songId }
+      data: { id: songId },
     };
   }
 
-  // マップ関連のAPI
+  // マップを作成（開発環境：即座に作成 / 本番環境：AIで初期曲をマッピング）
   async createMap(axes: { xAxis: string; yAxis: string }): Promise<ApiResponse<CreateMapResponse>> {
-    const { xAxis, yAxis } = axes;
-    
-    if (!xAxis || !yAxis) {
-      return {
-        success: false,
-        data: undefined,
-        message: 'Both xAxis and yAxis are required',
-        code: 'MISSING_AXES'
-      };
-    }
-
-    // マップIDを生成
-    const mapId = `map_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // 軸情報を保存
-    this.saveAxes({ xAxis, yAxis });
-    
-    // 既存の曲に座標を付与（並列処理）
-    // iTunes APIから実際のpreviewUrlを取得
-    const songsWithCoordinates: Song[] = await Promise.all(
-      MOCK_SONGS.map(async (song) => {
-        // iTunes APIから実際の曲情報を取得
-        const iTunesData = await this.fetchSongFromiTunes(song.title, song.artist);
-        const previewUrl = iTunesData?.previewUrl || song.previewUrl;
-        
-        // 座標を生成
-        const coordinates = await generateCoordinates({
-          previewUrl: previewUrl,
-          xAxisLabel: xAxis,
-          yAxisLabel: yAxis,
-        });
-        
+    try {
+      // Vercel Functions が利用できない環境では即座にマップIDを返す
+      if (!isVercelFunctionsAvailable()) {
+        const mapId = `map_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         return {
-          ...song,
-          previewUrl: previewUrl,
-          x: coordinates.x,
-          y: coordinates.y,
+          success: true,
+          data: {
+            mapId,
+            songs: [],
+          },
         };
-      })
-    );
-
-    // マップ状態を保存
-    localStorage.setItem(STORAGE_KEY_MAP_ID, mapId);
-    this.saveCurrentSongs(songsWithCoordinates);
-
-    return {
-      success: true,
-      data: {
-        mapId,
-        songs: songsWithCoordinates
       }
-    };
+
+      // Vercel環境ではAIで初期曲をマッピング
+      const response = await fetch(`${API_BASE_URL}/api/create-map`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          xAxis: axes.xAxis,
+          yAxis: axes.yAxis,
+          songs: [], // 初期は空のマップを作成
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        return {
+          success: false,
+          data: undefined,
+          message: data.message || 'マップの作成に失敗しました',
+          code: data.code || 'MAP_CREATION_FAILED',
+        };
+      }
+
+      return {
+        success: true,
+        data: data.data,
+      };
+    } catch (error) {
+      return handleApiError(error, 'マップの作成に失敗しました');
+    }
   }
 
-  // 検索関連のAPI
+  // 曲を検索（開発環境：直接iTunes API / 本番環境：Vercel Functions経由）
   async searchSongs(query: string): Promise<ApiResponse<SearchResult[]>> {
     if (!query || typeof query !== 'string') {
       return {
         success: false,
         data: undefined,
         message: 'Search query is required',
-        code: 'MISSING_QUERY'
+        code: 'MISSING_QUERY',
       };
     }
 
     if (!query.trim()) {
       return {
         success: true,
-        data: []
+        data: [],
       };
     }
 
     try {
-      // iTunes Search APIを使用して検索
+      // Vercel Functions が利用できない環境では直接iTunes APIを呼び出し
+      if (!isVercelFunctionsAvailable()) {
+        return await this.searchSongsFromiTunes(query);
+      }
+
+      // Vercel環境ではVercel Functions経由
+      const response = await fetch(
+        `${API_BASE_URL}/api/search-songs?q=${encodeURIComponent(query)}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        return {
+          success: false,
+          data: undefined,
+          message: data.message || '検索に失敗しました',
+          code: data.code || 'SEARCH_FAILED',
+        };
+      }
+
+      return {
+        success: true,
+        data: data.data,
+      };
+    } catch (error) {
+      return handleApiError(error, '検索に失敗しました');
+    }
+  }
+
+  // iTunes APIから直接検索（開発環境用）
+  private async searchSongsFromiTunes(query: string): Promise<ApiResponse<SearchResult[]>> {
+    try {
       const encodedQuery = encodeURIComponent(query.trim());
       const url = `https://itunes.apple.com/search?term=${encodedQuery}&media=music&entity=song&limit=25`;
-      
+
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error(`iTunes API returned ${response.status}`);
       }
 
       const data: iTunesSearchResponse = await response.json();
 
-      // iTunes APIのレスポンスをSearchResult形式に変換
       const results: SearchResult[] = data.results.map((track) => ({
         id: track.trackId.toString(),
         title: track.trackName,
         artist: track.artistName,
         album: track.collectionName,
         imageUrl: track.artworkUrl100,
-        spotifyUrl: track.trackViewUrl, // iTunes URLをspotifyUrlフィールドに格納
-        previewUrl: track.previewUrl
+        spotifyUrl: track.trackViewUrl,
+        previewUrl: track.previewUrl,
       }));
 
       return {
         success: true,
-        data: results
+        data: results,
       };
     } catch (error) {
-      console.error('Error searching iTunes:', error);
-      return {
-        success: false,
-        data: undefined,
-        message: error instanceof Error ? error.message : 'iTunes検索に失敗しました',
-        code: 'ITUNES_SEARCH_ERROR'
-      };
+      return handleApiError(error, 'iTunes検索に失敗しました');
     }
-  }
-
-  // ヘルパーメソッド
-  private getCurrentSongs(): Song[] {
-    const stored = localStorage.getItem(STORAGE_KEY_MAP);
-    if (!stored) return [...MOCK_SONGS];
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return [...MOCK_SONGS];
-    }
-  }
-
-  private saveCurrentSongs(songs: Song[]): void {
-    localStorage.setItem(STORAGE_KEY_MAP, JSON.stringify(songs));
-  }
-
-  private getCurrentAxes(): { xAxis: string; yAxis: string } | null {
-    const stored = localStorage.getItem(STORAGE_KEY_MAP_AXES);
-    if (!stored) return null;
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return null;
-    }
-  }
-
-  private saveAxes(axes: { xAxis: string; yAxis: string }): void {
-    localStorage.setItem(STORAGE_KEY_MAP_AXES, JSON.stringify(axes));
   }
 }
 

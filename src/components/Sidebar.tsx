@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
+import React from 'react';
 import { toast } from 'sonner';
 import { CONSTANTS } from '../constants';
 import { useSongSearch } from '../hooks/useSongs';
@@ -53,22 +54,25 @@ export function Sidebar({ isOpen, onToggle, onAddSong, hasCoordinates }: Sidebar
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
-                disabled={isSearching}
+                disabled={isSearching || !hasCoordinates}
               />
               <Button 
                 size="sm" 
                 onClick={() => performSearch()}
-                disabled={isSearching || !searchQuery.trim()}
+                disabled={isSearching || !searchQuery.trim() || !hasCoordinates}
               >
                 {CONSTANTS.BUTTONS.SEARCH}
               </Button>
             </div>
             
             {!hasCoordinates && (
-              <div className="bg-muted/50 p-3 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  {CONSTANTS.MESSAGES.INFO.MAP_CREATION_REQUIRED}
-                </p>
+              <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                    {CONSTANTS.MESSAGES.INFO.MAP_CREATION_REQUIRED}
+                  </p>
+                </div>
               </div>
             )}
           </div>

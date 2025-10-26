@@ -1,42 +1,33 @@
-# ---- Node / Monorepo common ----
-**/node_modules/
+# Logs
 logs
 *.log
 npm-debug.log*
-pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# ---- Build outputs ----
-**/dist/
-build/
-coverage/
-.nyc_output/
-
-# ---- Vite / Cache ----
-.vite/
-
-# ---- TypeScript ----
-*.tsbuildinfo
-
-# ---- Environment files ----
-.env
-.env.*
-!.env.example
-
-# ---- OS / Editor ----
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-
-# ---- Project-specific generated artifacts ----
-# If tsc outputs accidentally into shared/, ignore generated files there
-/shared/*.d.ts
-/shared/*.d.ts.map
-/shared/*.js
-/shared/*.js.map
+pnpm-debug.log*
+lerna-debug.log*
 
 node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.vercel
+
+# Build outputs
+build/

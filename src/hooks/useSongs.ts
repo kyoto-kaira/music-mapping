@@ -11,16 +11,11 @@ export const useSongs = () => {
   const loadInitialSongs = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await apiClient.getSongs();
-      if (response.success) {
-        setSongs(response.data);
-      } else {
-        throw new Error(response.message || 'Failed to load songs');
-      }
+      // 初期読み込みは不要（マップごとに曲を管理）
+      setIsLoading(false);
     } catch (error) {
       console.error('Error loading initial songs:', error);
       toast.error(CONSTANTS.MESSAGES.ERROR.INITIAL_LOAD_FAILED);
-    } finally {
       setIsLoading(false);
     }
   }, []);
@@ -34,7 +29,7 @@ export const useSongs = () => {
     setIsLoading(true);
     try {
       const response = await apiClient.createMap(axes);
-      if (response.success) {
+      if (response.success && response.data) {
         setSongs(response.data.songs);
         toast.success(CONSTANTS.MESSAGES.SUCCESS.MAP_CREATED);
         return true;
@@ -50,9 +45,9 @@ export const useSongs = () => {
     }
   }, []);
 
-  const addSong = useCallback(async (newSong: Omit<Song, 'x' | 'y'>) => {
+  const addSong = useCallback(async (newSong: Omit<Song, 'x' | 'y'>, axes: MapAxes) => {
     try {
-      const response = await apiClient.addSong(newSong);
+      const response = await apiClient.addSong(newSong, axes);
       if (response.success) {
         setSongs(prev => [...prev, response.data]);
         toast.success(CONSTANTS.MESSAGES.SUCCESS.SONG_ADDED);
@@ -88,6 +83,7 @@ export const useSongs = () => {
 
   return {
     songs,
+    setSongs,
     isLoading,
     loadInitialSongs,
     createMap,

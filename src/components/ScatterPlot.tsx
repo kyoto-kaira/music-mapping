@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CONSTANTS } from '../constants';
 import { ScatterPlotProps } from '../types';
 
@@ -22,11 +22,15 @@ export function ScatterPlot({
     yDomain: [number, number] | null;
     isZoomed: boolean;
     scale: number;
+    baseXDomain: [number, number] | null;
+    baseYDomain: [number, number] | null;
   }>({
     xDomain: null,
     yDomain: null,
     isZoomed: false,
-    scale: 1
+    scale: 1,
+    baseXDomain: null,
+    baseYDomain: null
   });
 
   // ズーム制御のための状態
@@ -36,6 +40,9 @@ export function ScatterPlot({
   const data = useMemo(() => {
     return songs.filter(song => song.x !== undefined && song.y !== undefined);
   }, [songs]);
+  
+  // 強制再描画用のカウンター
+  const [forceUpdateCounter, setForceUpdateCounter] = useState(0);
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current || !hasCoordinates) return;
@@ -80,6 +87,10 @@ export function ScatterPlot({
     
     const baseXDomain: [number, number] = [xCenter - xDomainSize / 2, xCenter + xDomainSize / 2];
     const baseYDomain: [number, number] = [yCenter - yDomainSize / 2, yCenter + yDomainSize / 2];
+    
+    // ベースドメインを保存
+    zoomStateRef.current.baseXDomain = baseXDomain;
+    zoomStateRef.current.baseYDomain = baseYDomain;
     
     // ズーム状態を保持している場合はそれを使用、そうでなければデフォルト範囲を使用
     const initialXDomain = zoomStateRef.current.isZoomed && zoomStateRef.current.xDomain 
@@ -494,8 +505,32 @@ export function ScatterPlot({
 
     // Add points (after brush so they render on top)
     const circles = g.selectAll('.point')
-      .data(data)
-      .enter().append('circle')
+      .data(data, (d: any) => d.id) // キーを指定してデータバインディング
+      .join(
+        enter => enter.append('circle')
+          .attr('class', d => newlyAddedSongId === d.id ? 'point new-song-pulse' : 'point')
+          .attr('cx', d => xScale(d.x!))
+          .attr('cy', d => yScale(d.y!))
+          .attr('r', 0) // 初期サイズ0でアニメーション
+          .style('opacity', 0)
+          .call(enter => enter.transition().duration(300)
+            .attr('r', d => {
+              if (selectedSong?.id === d.id) return 10;
+              if (newlyAddedSongId === d.id) return 10;
+              return 7;
+            })
+            .style('opacity', 0.9)
+          ),
+        update => update
+          .attr('class', d => newlyAddedSongId === d.id ? 'point new-song-pulse' : 'point'),
+        exit => exit.transition().duration(300)
+          .attr('r', 0)
+          .style('opacity', 0)
+          .remove()
+      );
+
+    // Apply attributes after join
+    circles
       .attr('class', d => newlyAddedSongId === d.id ? 'point new-song-pulse' : 'point')
       .attr('cx', d => xScale(d.x!))
       .attr('cy', d => yScale(d.y!))
@@ -631,20 +666,20 @@ export function ScatterPlot({
 
     // Double-click to reset zoom
     svg.on('dblclick', () => {
-      xScale.domain(baseXDomain);
-      yScale.domain(baseYDomain);
-      
       // Reset zoom state
       zoomStateRef.current = {
         xDomain: null,
         yDomain: null,
         isZoomed: false,
-        scale: 1
+        scale: 1,
+        baseXDomain: zoomStateRef.current.baseXDomain,
+        baseYDomain: zoomStateRef.current.baseYDomain
       };
       
       setZoomLevel(1);
       
-      updateVisualization();
+      // 強制的に再描画をトリガー
+      setForceUpdateCounter(prev => prev + 1);
     });
 
     // Prevent context menu on right click
@@ -652,7 +687,7 @@ export function ScatterPlot({
       event.preventDefault();
     });
 
-  }, [mapAxes, hasCoordinates, selectedSong, onSongSelect, newlyAddedSongId]);
+  }, [songs, mapAxes, hasCoordinates, selectedSong, onSongSelect, newlyAddedSongId, forceUpdateCounter]);
 
   // Handle resize
   useEffect(() => {
@@ -818,18 +853,20 @@ export function ScatterPlot({
   };
 
   const resetZoom = () => {
+    // Reset zoom state
     zoomStateRef.current = {
       xDomain: null,
       yDomain: null,
       isZoomed: false,
-      scale: 1
+      scale: 1,
+      baseXDomain: zoomStateRef.current.baseXDomain,
+      baseYDomain: zoomStateRef.current.baseYDomain
     };
     
     setZoomLevel(1);
     
-    // Trigger re-render
-    const event = new Event('resize');
-    window.dispatchEvent(event);
+    // 強制的に再描画をトリガー
+    setForceUpdateCounter(prev => prev + 1);
   };
 
   return (
