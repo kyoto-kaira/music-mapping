@@ -12,6 +12,20 @@ export function AudioPlayer({ previewUrl, className = '' }: AudioPlayerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // Reset state when previewUrl changes
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    // Stop previous audio and reset state
+    audio.pause();
+    audio.currentTime = 0;
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    setIsLoading(false);
+  }, [previewUrl]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -41,7 +55,7 @@ export function AudioPlayer({ previewUrl, className = '' }: AudioPlayerProps) {
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [previewUrl]);
+  }, []);
 
   const togglePlayback = async () => {
     const audio = audioRef.current;

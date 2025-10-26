@@ -1,10 +1,7 @@
 import { ExternalLink, GripVertical, Trash2, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FloatingCardProps } from '../types';
 import { AudioPlayer } from './AudioPlayer';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
 
 export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded = false }: FloatingCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -22,10 +19,14 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
     const windowHeight = window.innerHeight;
     
     // Get the SVG container's position to convert SVG coordinates to screen coordinates
-    const svgContainer = document.querySelector('.h-full.relative') as HTMLElement;
+    const svgContainer = document.querySelector('.map-view-plot') as HTMLElement;
     const svgRect = svgContainer?.getBoundingClientRect();
     
     if (!svgRect) return;
+    
+    // Get header height to account for it
+    const header = document.querySelector('.map-view-header') as HTMLElement;
+    const headerHeight = header?.getBoundingClientRect().height || 64;
     
     // Convert SVG coordinates to screen coordinates
     const screenX = svgRect.left + position.x;
@@ -34,6 +35,7 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
     // Calculate optimal position with better spacing
     const offset = 15;
     const margin = 20;
+    const topMargin = headerHeight + 20; // Add extra space below header
     
     // Try to position to the right first, then left if not enough space
     let x = screenX + offset;
@@ -44,9 +46,9 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
       x = screenX - rect.width - offset; // Show on left side
     }
     
-    // Ensure minimum margins
+    // Ensure minimum margins (especially from top)
     x = Math.max(margin, Math.min(x, windowWidth - rect.width - margin));
-    y = Math.max(margin, Math.min(y, windowHeight - rect.height - margin));
+    y = Math.max(topMargin, Math.min(y, windowHeight - rect.height - margin));
     
     setCardPosition({ x, y });
   }, [position, song.id]);
@@ -152,9 +154,9 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
   return (
     <div 
       ref={cardRef}
-      className={`fixed z-50 animate-in fade-in-0 zoom-in-95 duration-300 ease-out ${
-        isDragging ? 'cursor-grabbing' : 'cursor-grab'
-      }`}
+      className={`floating-card ${
+        isDragging ? 'floating-card-dragging' : ''
+      } ${isNewlyAdded ? 'floating-card-new' : ''}`}
       style={{
         left: `${cardPosition.x}px`,
         top: `${cardPosition.y}px`,
@@ -165,76 +167,60 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
       onMouseUp={handleMouseUp}
       onClick={handleCardClick}
     >
-      <Card className="w-80 shadow-lg border-2 select-none">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-2 flex-1">
-              <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-medium text-lg leading-tight truncate">{song.title}</h3>
-                  {isNewlyAdded && (
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs px-2 py-0.5 animate-pulse">
-                      NEW
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-muted-foreground truncate">{song.artist}</p>
-                {song.album && (
-                  <p className="text-sm text-muted-foreground truncate">{song.album}</p>
+      <div className="floating-card-content">
+        <div className="floating-card-header">
+          <div className="floating-card-drag-handle">
+            <GripVertical className="drag-icon" />
+            <div className="floating-card-info">
+              <div className="floating-card-title-row">
+                <h3 className="floating-card-title">{song.title}</h3>
+                {isNewlyAdded && (
+                  <span className="floating-card-badge">NEW</span>
                 )}
               </div>
+              <p className="floating-card-artist">{song.artist}</p>
+              {song.album && (
+                <p className="floating-card-album">{song.album}</p>
+              )}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="flex-shrink-0"
-            >
-              <X className="w-4 h-4" />
-            </Button>
           </div>
-          
-          {song.imageUrl && (
-            <img 
-              src={song.imageUrl} 
-              alt={song.title}
-              className="w-full h-32 object-cover rounded mb-3"
-              draggable={false}
-            />
+          <button className="floating-card-close" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+        
+        {song.imageUrl && (
+          <img 
+            src={song.imageUrl} 
+            alt={song.title}
+            className="floating-card-image"
+            draggable={false}
+          />
+        )}
+        
+        {song.previewUrl && (
+          <div className="floating-card-player">
+            <AudioPlayer previewUrl={song.previewUrl} className="w-full" />
+          </div>
+        )}
+        
+        <div className="floating-card-actions">
+          {song.spotifyUrl && (
+            <button className="floating-card-btn floating-card-btn-spotify" onClick={handleSpotifyClick}>
+              <ExternalLink size={16} />
+              <span>Apple Music</span>
+            </button>
           )}
           
-          {song.previewUrl && (
-            <div className="mb-3">
-              <AudioPlayer previewUrl={song.previewUrl} className="w-full" />
-            </div>
-          )}
-          
-          <div className="flex items-center gap-2">
-            {song.spotifyUrl && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSpotifyClick}
-                className="flex-1"
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Spotify
-              </Button>
-            )}
-            
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleRemove}
-              title="削除 (Deleteキー)"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-          
-        </CardContent>
-      </Card>
+          <button 
+            className="floating-card-btn floating-card-btn-delete" 
+            onClick={handleRemove}
+            title="削除 (Deleteキー)"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

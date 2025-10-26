@@ -4,9 +4,6 @@ import { toast } from 'sonner';
 import { CONSTANTS } from '../constants';
 import { useSongSearch } from '../hooks/useSongs';
 import { SidebarProps } from '../types';
-import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
-import { Input } from './ui/input';
 
 export function Sidebar({ isOpen, onToggle, onAddSong, hasCoordinates }: SidebarProps) {
   const { 
@@ -42,105 +39,88 @@ export function Sidebar({ isOpen, onToggle, onAddSong, hasCoordinates }: Sidebar
 
   return (
     <>
-      <div className={`bg-sidebar border-l transition-all duration-300 ${
-        isOpen ? 'w-80' : 'w-0'
-      } overflow-hidden`}>
-        <div className="h-full flex flex-col">
-          <div className="p-4 border-b">
-            <div className="flex items-center gap-2 mb-4">
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <Input
+      <div className={`sidebar ${isOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+        <div className="sidebar-content">
+          <div className="sidebar-search-section">
+            <div className="search-bar">
+              <Search className="search-icon" />
+              <input
+                className="search-input"
                 placeholder={CONSTANTS.PLACEHOLDERS.SEARCH}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={isSearching || !hasCoordinates}
               />
-              <Button 
-                size="sm" 
+              <button 
+                className="search-btn"
                 onClick={() => performSearch()}
                 disabled={isSearching || !searchQuery.trim() || !hasCoordinates}
               >
                 {CONSTANTS.BUTTONS.SEARCH}
-              </Button>
+              </button>
             </div>
             
             {!hasCoordinates && (
-              <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-                    {CONSTANTS.MESSAGES.INFO.MAP_CREATION_REQUIRED}
-                  </p>
-                </div>
+              <div className="sidebar-warning">
+                <AlertCircle className="warning-icon" />
+                <p className="warning-text">
+                  {CONSTANTS.MESSAGES.INFO.MAP_CREATION_REQUIRED}
+                </p>
               </div>
             )}
           </div>
           
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="sidebar-results">
             {isSearching && (
-              <div className="text-center py-8">
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                <p className="text-sm text-muted-foreground">{CONSTANTS.MESSAGES.INFO.SEARCHING}</p>
+              <div className="sidebar-loading">
+                <div className="sidebar-spinner"></div>
+                <p className="sidebar-loading-text">{CONSTANTS.MESSAGES.INFO.SEARCHING}</p>
               </div>
             )}
             
             {!isSearching && searchResults.length === 0 && searchQuery && (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground">{CONSTANTS.MESSAGES.INFO.NO_RESULTS}</p>
+              <div className="sidebar-empty">
+                <p className="sidebar-empty-text">{CONSTANTS.MESSAGES.INFO.NO_RESULTS}</p>
               </div>
             )}
             
             {!isSearching && searchResults.length === 0 && !searchQuery && (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground">
+              <div className="sidebar-empty">
+                <p className="sidebar-empty-text">
                   {CONSTANTS.MESSAGES.INFO.ENTER_SEARCH_TERM}
                 </p>
               </div>
             )}
             
             {searchResults.map((result) => (
-              <Card key={result.id} className="overflow-hidden">
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={result.imageUrl} 
-                      alt={result.title}
-                      className="w-12 h-12 rounded object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate">{result.title}</p>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {result.artist}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {result.album}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleAddSong(result)}
-                      disabled={!hasCoordinates}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <div key={result.id} className="search-result-card">
+                <img 
+                  src={result.imageUrl} 
+                  alt={result.title}
+                  className="result-image"
+                />
+                <div className="result-info">
+                  <p className="result-title">{result.title}</p>
+                  <p className="result-artist">{result.artist}</p>
+                  <p className="result-album">{result.album}</p>
+                </div>
+                <button
+                  className="result-add-btn"
+                  onClick={() => handleAddSong(result)}
+                  disabled={!hasCoordinates}
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
             ))}
           </div>
         </div>
       </div>
       
-      <Button
-        variant="outline"
-        size="sm"
-        className="fixed top-1/2 right-4 z-10 shadow-lg"
-        onClick={onToggle}
-      >
-        {isOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-      </Button>
+      <button className="sidebar-toggle" onClick={onToggle}>
+        {isOpen ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+      </button>
     </>
   );
 }

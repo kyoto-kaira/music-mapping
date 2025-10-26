@@ -1,8 +1,6 @@
-import { Music2, Plus, TrendingUp } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { deleteMap, getAllMaps, MapData } from '../services/mapService';
 
 export function Home() {
@@ -29,8 +27,18 @@ export function Home() {
     navigate(`/map/${mapId}`);
   };
 
-  const handleDeleteMap = async (mapId: string, e: React.MouseEvent) => {
+  const handleDeleteMap = async (mapId: string, mapName: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // 確認ダイアログを表示
+    const isConfirmed = window.confirm(
+      `「${mapName}」を削除してもよろしいですか？\n\nこの操作は取り消せません。`
+    );
+    
+    if (!isConfirmed) {
+      return;
+    }
+    
     const success = await deleteMap(mapId);
     if (success) {
       setSavedMaps(savedMaps.filter(m => m.id !== mapId));
@@ -38,110 +46,105 @@ export function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
-      <div className="container mx-auto px-4 py-12">
-        {/* ヘッダー */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Music2 className="w-12 h-12 text-primary" />
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Music Mapping
-            </h1>
+    <div className="home-page">
+      {/* Animated background elements */}
+      <div className="bg-shapes">
+        <div className="shape shape1"></div>
+        <div className="shape shape2"></div>
+        <div className="shape shape3"></div>
+      </div>
+
+      <div className="home-container">
+        {/* Header */}
+        <div className="home-header">
+          <div className="logo">
+            <div className="logo-icon">🎵</div>
+            <div className="logo-text">Music Mapping</div>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            音楽を可視化して、新しい音楽体験を。
-            <br />
-            あなたの好きな曲を軸にマッピングしてみましょう。
-          </p>
+          <div className="subtitle">音楽を可視化して、新しい音楽体験を。</div>
+          <div className="description">あなたの好きな曲を軸にマッピングしてみましょう。</div>
+          <button className="create-btn" onClick={handleCreateNewMap}>
+            <span style={{ fontSize: '20px' }}>+</span>
+            <span>新しいマップを作成</span>
+          </button>
         </div>
 
-        {/* 新規作成ボタン */}
-        <div className="flex justify-center mb-12">
-          <Button
-            size="lg"
-            onClick={handleCreateNewMap}
-            className="gap-2 text-lg px-8 py-6 shadow-xl hover:shadow-2xl transition-all"
-          >
-            <Plus className="w-5 h-5" />
-            新しいマップを作成
-          </Button>
-        </div>
-
-        {/* マップ一覧 */}
+        {/* Maps section */}
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : savedMaps.length > 0 ? (
-          <div>
-            <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-              <TrendingUp className="w-6 h-6" />
-              保存されたマップ
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {savedMaps.map((map) => (
-                <Card
-                  key={map.id}
-                  className="hover:shadow-lg transition-all cursor-pointer group"
-                  onClick={() => handleOpenMap(map.id)}
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="truncate">{map.name}</span>
-                      <Music2 className="w-5 h-5 text-primary flex-shrink-0" />
-                    </CardTitle>
-                    <CardDescription>
-                      {map.songCount} 曲 • {new Date(map.lastModified).toLocaleDateString('ja-JP')}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">X軸:</span>
-                        <span className="font-medium">{map.axes.xAxis}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">Y軸:</span>
-                        <span className="font-medium">{map.axes.yAxis}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenMap(map.id)}
-                      className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                    >
-                      開く
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => handleDeleteMap(map.id, e)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      削除
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+          <div className="loading-container">
+            <div className="loading-content">
+              <div className="loading-spinner-large"></div>
+              <p className="loading-text-large">読み込み中...</p>
+              <p className="loading-subtext">マップを取得しています</p>
             </div>
           </div>
+        ) : savedMaps.length > 0 ? (
+          <>
+            <div className="section-title">
+              <span>保存されたマップ</span>
+            </div>
+
+            <div className="maps-grid">
+              {savedMaps.map((map) => (
+                <div 
+                  key={map.id} 
+                  className="map-card map-card-clickable"
+                  onClick={() => handleOpenMap(map.id)}
+                >
+                  <div className="map-header">
+                    <div className="map-info">
+                      <div className="map-title">
+                        {map.name}
+                        <span className="map-icon">🎵</span>
+                      </div>
+                      <div className="map-meta">
+                        {map.songCount} 曲 • {new Date(map.lastModified).toLocaleDateString('ja-JP')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="map-details">
+                    <div className="axis-info">
+                      <div className="axis-item">
+                        <div className="axis-label">X軸</div>
+                        <div className="axis-value">{map.axes.xAxis}</div>
+                      </div>
+                      <div className="axis-item">
+                        <div className="axis-label">Y軸</div>
+                        <div className="axis-value">{map.axes.yAxis}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="map-actions">
+                    <button 
+                      className="btn btn-delete btn-delete-only" 
+                      onClick={(e) => handleDeleteMap(map.id, map.name, e)}
+                      title="削除"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
-          <Card className="max-w-md mx-auto border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <Music2 className="w-16 h-16 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">マップがまだありません</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                最初のマップを作成して、音楽の世界を探索しましょう！
-              </p>
-              <Button onClick={handleCreateNewMap} className="gap-2">
-                <Plus className="w-4 h-4" />
-                マップを作成
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="empty-state">
+            <div className="map-card">
+              <div className="empty-content">
+                <div className="empty-icon">🎵</div>
+                <h3 className="empty-title">マップがまだありません</h3>
+                <p className="empty-description">
+                  最初のマップを作成して、音楽の世界を探索しましょう！
+                </p>
+                <button className="create-btn" onClick={handleCreateNewMap}>
+                  <Plus size={20} />
+                  <span>マップを作成</span>
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

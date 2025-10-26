@@ -2,10 +2,6 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import { CONSTANTS } from '../constants';
 import { createMap } from '../services/mapService';
 
@@ -59,36 +55,38 @@ export function CreateMap() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        <Button
-          variant="ghost"
-          onClick={handleBack}
-          className="mb-6 gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          ホームに戻る
-        </Button>
+    <div className="create-map-page">
+      {/* Animated background elements */}
+      <div className="bg-shapes">
+        <div className="shape shape1"></div>
+        <div className="shape shape2"></div>
+        <div className="shape shape3"></div>
+      </div>
 
-        <Card className="shadow-2xl">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <Sparkles className="w-8 h-8 text-primary" />
-              </div>
+      <div className="create-map-container">
+        <button className="back-btn" onClick={handleBack}>
+          <ArrowLeft size={18} />
+          <span>ホームに戻る</span>
+        </button>
+
+        <div className="create-card">
+          <div className="create-header">
+            <div className="sparkle-icon">
+              <Sparkles size={40} />
             </div>
-            <CardTitle className="text-3xl">新しいマップを作成</CardTitle>
-            <CardDescription className="text-base">
+            <h1 className="create-title">新しいマップを作成</h1>
+            <p className="create-description">
               音楽の特徴を2つの軸で表現してマップを作成します
-            </CardDescription>
-          </CardHeader>
+            </p>
+          </div>
 
-          <CardContent className="space-y-6">
+          <div className="create-content">
             {/* マップ名 */}
-            <div className="space-y-2">
-              <Label htmlFor="mapName">マップ名</Label>
-              <Input
+            <div className="form-group">
+              <label htmlFor="mapName" className="form-label">マップ名</label>
+              <input
                 id="mapName"
+                className="form-input"
                 placeholder="例: お気に入りの曲コレクション"
                 value={mapName}
                 onChange={(e) => setMapName(e.target.value)}
@@ -97,10 +95,11 @@ export function CreateMap() {
             </div>
 
             {/* X軸 */}
-            <div className="space-y-2">
-              <Label htmlFor="xAxis">X軸（横軸）</Label>
-              <Input
+            <div className="form-group">
+              <label htmlFor="xAxis" className="form-label">X軸（横軸）</label>
+              <input
                 id="xAxis"
+                className="form-input"
                 placeholder={CONSTANTS.PLACEHOLDERS.X_AXIS}
                 value={xAxis}
                 onChange={(e) => setXAxis(e.target.value)}
@@ -109,10 +108,11 @@ export function CreateMap() {
             </div>
 
             {/* Y軸 */}
-            <div className="space-y-2">
-              <Label htmlFor="yAxis">Y軸（縦軸）</Label>
-              <Input
+            <div className="form-group">
+              <label htmlFor="yAxis" className="form-label">Y軸（縦軸）</label>
+              <input
                 id="yAxis"
+                className="form-input"
                 placeholder={CONSTANTS.PLACEHOLDERS.Y_AXIS}
                 value={yAxis}
                 onChange={(e) => setYAxis(e.target.value)}
@@ -121,46 +121,42 @@ export function CreateMap() {
             </div>
 
             {/* 提案 */}
-            <div className="space-y-3">
-              <Label>軸の組み合わせ例</Label>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="form-group">
+              <label className="form-label">軸の組み合わせ例</label>
+              <div className="suggestions-grid">
                 {AXIS_SUGGESTIONS.map((suggestion, index) => (
-                  <Button
+                  <button
                     key={index}
-                    variant="outline"
-                    size="sm"
+                    className="suggestion-btn"
                     onClick={() => handleSuggestionClick(suggestion)}
                     disabled={isCreating}
-                    className="justify-start text-left h-auto py-2 px-3"
                   >
-                    <div className="text-xs">
-                      <div className="font-medium">{suggestion.x} × {suggestion.y}</div>
-                    </div>
-                  </Button>
+                    {suggestion.x} × {suggestion.y}
+                  </button>
                 ))}
               </div>
             </div>
 
             {/* 作成ボタン */}
-            <Button
+            <button
               onClick={handleCreateMap}
               disabled={isCreating || !mapName.trim() || !xAxis.trim() || !yAxis.trim()}
-              className="w-full gap-2 py-6 text-lg"
+              className="submit-btn"
             >
               {isCreating ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="spinner-small" />
                   作成中...
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles size={20} />
                   マップを作成
                 </>
               )}
-            </Button>
-          </CardContent>
-        </Card>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
