@@ -19,7 +19,7 @@ interface iTunesSearchResponse {
 // iTunes APIで曲を検索
 async function searchiTunesTracks(query: string): Promise<iTunesTrack[]> {
   const encodedQuery = encodeURIComponent(query.trim());
-  const url = `https://itunes.apple.com/search?term=${encodedQuery}&media=music&entity=song&limit=25`;
+  const url = `https://itunes.apple.com/search?term=${encodedQuery}&media=music&entity=song&limit=25&country=JP`;
 
   const response = await fetch(url);
 
