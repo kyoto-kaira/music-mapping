@@ -1,6 +1,6 @@
-import { SearchResult, Song } from '../../../shared/types';
+import { SearchResult, Song } from '../../shared/types';
 
-// モックデータ（元のフロントエンドから移動）
+// モックデータ
 export const MOCK_SONGS: Song[] = [
   {
     id: "1",
@@ -97,3 +97,4 @@ export const searchSongs = (query: string, songs: SearchResult[]): SearchResult[
     song.artist.toLowerCase().includes(lowerQuery)
   );
 };
+

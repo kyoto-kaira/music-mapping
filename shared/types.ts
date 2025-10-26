@@ -35,8 +35,9 @@ export interface SongPosition {
 // API関連の型定義
 export interface ApiResponse<T> {
   success: boolean;
-  data: T;
+  data?: T;
   message?: string;
+  code?: string;
 }
 
 export interface CreateMapRequest {

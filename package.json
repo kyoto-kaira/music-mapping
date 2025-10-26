@@ -50,20 +50,11 @@
     "devDependencies": {
         "@types/node": "^20.10.0",
         "@vitejs/plugin-react-swc": "^3.10.2",
-        "concurrently": "^8.2.2",
         "vite": "6.3.5"
     },
     "scripts": {
-        "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-        "dev:frontend": "vite",
-        "dev:backend": "cd backend && npm run dev",
-        "build": "concurrently \"npm run build:backend\" \"npm run build:frontend\"",
-        "build:frontend": "vite build",
-        "build:backend": "cd backend && npm run build",
-        "start": "npm run build && concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-        "start:frontend": "vite preview",
-        "start:backend": "cd backend && npm start",
-        "install:all": "npm install && cd backend && npm install",
-        "build:all": "npm run install:all && npm run build"
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
     }
 }
