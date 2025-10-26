@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/src/server.ts",
+      "src": "api/**/*.ts",
       "use": "@vercel/node"
     },
     {
@@ -15,8 +15,16 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "backend/src/server.ts"
+      "src": "/api/search-songs",
+      "dest": "/api/search-songs.ts"
+    },
+    {
+      "src": "/api/add-song",
+      "dest": "/api/add-song.ts"
+    },
+    {
+      "src": "/api/create-map",
+      "dest": "/api/create-map.ts"
     },
     {
       "src": "/(.*)",
