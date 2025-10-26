@@ -1,12 +1,12 @@
-import { ArrowLeft, Home } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Home, Edit2, Check, X } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FloatingCard } from '../components/FloatingCard';
 import { ScatterPlot } from '../components/ScatterPlot';
 import { Sidebar } from '../components/Sidebar';
 import { useSongs, useSongSelection } from '../hooks/useSongs';
-import { addSongToMap, getMapById, MapWithSongs, removeSongFromMap } from '../services/mapService';
+import { addSongToMap, getMapById, MapWithSongs, removeSongFromMap, updateMapName } from '../services/mapService';
 import { Song } from '../types';
 
 export function MapView() {
@@ -15,6 +15,9 @@ export function MapView() {
   const [mapData, setMapData] = useState<MapWithSongs | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { songs, setSongs, addSong } = useSongs();
   const {
@@ -83,6 +86,43 @@ export function MapView() {
     navigate('/');
   };
 
+  const handleStartEditingName = () => {
+    if (mapData) {
+      setEditedName(mapData.name);
+      setIsEditingName(true);
+      setTimeout(() => inputRef.current?.select(), 0);
+    }
+  };
+
+  const handleCancelEditingName = () => {
+    setIsEditingName(false);
+    setEditedName('');
+  };
+
+  const handleSaveMapName = async () => {
+    if (!mapId || !editedName.trim() || editedName === mapData?.name) {
+      setIsEditingName(false);
+      return;
+    }
+
+    const success = await updateMapName(mapId, editedName.trim());
+    if (success) {
+      setMapData((prev) => prev ? { ...prev, name: editedName.trim() } : null);
+      setIsEditingName(false);
+      toast.success('マップ名を更新しました');
+    } else {
+      toast.error('マップ名の更新に失敗しました');
+    }
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveMapName();
+    } else if (e.key === 'Escape') {
+      handleCancelEditingName();
+    }
+  };
+
   // グローバルキーボードショートカット
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -142,7 +182,43 @@ export function MapView() {
             </button>
             <div className="header-divider" />
             <div className="header-info">
-              <h1 className="header-title">{mapData.name}</h1>
+              {isEditingName ? (
+                <div className="header-title-edit">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    onKeyDown={handleNameKeyDown}
+                    onBlur={handleSaveMapName}
+                    className="header-title-input"
+                    maxLength={50}
+                  />
+                  <div className="header-title-actions">
+                    <button
+                      className="header-title-action-btn success"
+                      onClick={handleSaveMapName}
+                      title="保存"
+                    >
+                      <Check size={14} />
+                    </button>
+                    <button
+                      className="header-title-action-btn cancel"
+                      onClick={handleCancelEditingName}
+                      title="キャンセル"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="header-title-display" onClick={handleStartEditingName}>
+                  <h1 className="header-title">{mapData.name}</h1>
+                  <button className="header-title-edit-btn" title="マップ名を編集">
+                    <Edit2 size={14} />
+                  </button>
+                </div>
+              )}
               <div className="header-meta">
                 <span>{mapData.axes.xAxis} × {mapData.axes.yAxis}</span>
                 <span>•</span>

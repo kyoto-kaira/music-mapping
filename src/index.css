@@ -1794,6 +1794,107 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  position: relative;
+  padding-right: 60px;
+}
+
+.map-title:hover .map-title-edit-btn-inline {
+  opacity: 1;
+}
+
+.map-title-edit-btn-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  order: -1;
+}
+
+.map-title-edit-btn-inline:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.map-title-edit-wrapper {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.map-title-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.map-title-input {
+  flex: 1;
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 8px 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.map-title-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.map-title-input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.map-title-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.map-title-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.map-title-action-btn:hover {
+  transform: scale(1.1);
+}
+
+.map-title-action-btn.success {
+  background: rgba(74, 222, 128, 0.3);
+}
+
+.map-title-action-btn.success:hover {
+  background: rgba(74, 222, 128, 0.5);
+}
+
+.map-title-action-btn.cancel {
+  background: rgba(248, 113, 113, 0.3);
+}
+
+.map-title-action-btn.cancel:hover {
+  background: rgba(248, 113, 113, 0.5);
 }
 
 .map-meta {
@@ -2359,6 +2460,111 @@ body {
   font-weight: 700;
   color: white;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.header-title-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: -8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.header-title-display:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.header-title-display:hover .header-title-edit-btn {
+  opacity: 1;
+}
+
+.header-title-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.header-title-edit-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.header-title-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-title-input {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 6px 12px;
+  outline: none;
+  transition: all 0.2s ease;
+  min-width: 200px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.header-title-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.header-title-input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.header-title-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.header-title-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.header-title-action-btn:hover {
+  transform: scale(1.1);
+}
+
+.header-title-action-btn.success {
+  background: rgba(74, 222, 128, 0.3);
+}
+
+.header-title-action-btn.success:hover {
+  background: rgba(74, 222, 128, 0.5);
+}
+
+.header-title-action-btn.cancel {
+  background: rgba(248, 113, 113, 0.3);
+}
+
+.header-title-action-btn.cancel:hover {
+  background: rgba(248, 113, 113, 0.5);
 }
 
 .header-meta {

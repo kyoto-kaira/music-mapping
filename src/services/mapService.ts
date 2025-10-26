@@ -186,6 +186,25 @@ export async function removeSongFromMap(mapId: string, songId: string): Promise<
   }
 }
 
+// マップ名を更新
+export async function updateMapName(mapId: string, newName: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('maps')
+      .update({ 
+        name: newName,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', mapId);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error updating map name:', error);
+    return false;
+  }
+}
+
 // マップを削除
 export async function deleteMap(mapId: string): Promise<boolean> {
   try {

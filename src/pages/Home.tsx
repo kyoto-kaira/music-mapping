@@ -1,12 +1,16 @@
-import { Plus, Trash2 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Check, Edit2, Plus, Trash2, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { deleteMap, getAllMaps, MapData } from '../services/mapService';
+import { toast } from 'sonner';
+import { deleteMap, getAllMaps, MapData, updateMapName } from '../services/mapService';
 
 export function Home() {
   const navigate = useNavigate();
   const [savedMaps, setSavedMaps] = useState<MapData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingMapId, setEditingMapId] = useState<string | null>(null);
+  const [editedName, setEditedName] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadMaps();
@@ -43,6 +47,54 @@ export function Home() {
     if (success) {
       setSavedMaps(savedMaps.filter(m => m.id !== mapId));
     }
+  };
+
+  const handleStartEditing = (mapId: string, currentName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingMapId(mapId);
+    setEditedName(currentName);
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
+  const handleCancelEditing = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingMapId(null);
+    setEditedName('');
+  };
+
+  const handleSaveName = async (mapId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!editedName.trim()) {
+      setEditingMapId(null);
+      return;
+    }
+
+    const success = await updateMapName(mapId, editedName.trim());
+    if (success) {
+      setSavedMaps(savedMaps.map(m => 
+        m.id === mapId ? { ...m, name: editedName.trim() } : m
+      ));
+      setEditingMapId(null);
+      toast.success('マップ名を更新しました');
+    } else {
+      toast.error('マップ名の更新に失敗しました');
+    }
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent, mapId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveName(mapId, e as any);
+    } else if (e.key === 'Escape') {
+      e.stopPropagation();
+      setEditingMapId(null);
+      setEditedName('');
+    }
+  };
+
+  const handleInputClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   return (
@@ -93,10 +145,50 @@ export function Home() {
                 >
                   <div className="map-header">
                     <div className="map-info">
-                      <div className="map-title">
-                        {map.name}
-                        <span className="map-icon">🎵</span>
-                      </div>
+                      {editingMapId === map.id ? (
+                        <div className="map-title-edit-wrapper">
+                          <div className="map-title-edit" onClick={handleInputClick}>
+                            <input
+                              ref={inputRef}
+                              type="text"
+                              value={editedName}
+                              onChange={(e) => setEditedName(e.target.value)}
+                              onKeyDown={(e) => handleNameKeyDown(e, map.id)}
+                              className="map-title-input"
+                              maxLength={50}
+                              onClick={handleInputClick}
+                            />
+                            <div className="map-title-actions">
+                              <button
+                                className="map-title-action-btn success"
+                                onClick={(e) => handleSaveName(map.id, e)}
+                                title="保存"
+                              >
+                                <Check size={16} />
+                              </button>
+                              <button
+                                className="map-title-action-btn cancel"
+                                onClick={handleCancelEditing}
+                                title="キャンセル"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="map-title">
+                          <button 
+                            className="map-title-edit-btn-inline"
+                            onClick={(e) => handleStartEditing(map.id, map.name, e)}
+                            title="マップ名を編集"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          {map.name}
+                          <span className="map-icon">🎵</span>
+                        </div>
+                      )}
                       <div className="map-meta">
                         {map.songCount} 曲 • {new Date(map.lastModified).toLocaleDateString('ja-JP')}
                       </div>
@@ -116,15 +208,17 @@ export function Home() {
                     </div>
                   </div>
 
-                  <div className="map-actions">
-                    <button 
-                      className="btn btn-delete btn-delete-only" 
-                      onClick={(e) => handleDeleteMap(map.id, map.name, e)}
-                      title="削除"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
+                  {editingMapId !== map.id && (
+                    <div className="map-actions">
+                      <button 
+                        className="btn btn-delete btn-delete-only" 
+                        onClick={(e) => handleDeleteMap(map.id, map.name, e)}
+                        title="削除"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
