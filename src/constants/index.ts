@@ -63,7 +63,7 @@ export const CONSTANTS = {
     CREATE_MAP: 'マップ作成',
     CREATING_MAP: 'マップ作成中...',
     SEARCH: '検索',
-    PREVIEW_PLAY: 'プレビュー再生',
+    PREVIEW_PLAY: '再生',
     PAUSE: '停止',
     LOADING: '読み込み中...',
     NO_PREVIEW: 'プレビューなし',

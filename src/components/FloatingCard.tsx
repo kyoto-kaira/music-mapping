@@ -168,57 +168,61 @@ export function FloatingCard({ song, position, onRemove, onClose, isNewlyAdded =
       onClick={handleCardClick}
     >
       <div className="floating-card-content">
-        <div className="floating-card-header">
-          <div className="floating-card-drag-handle">
-            <GripVertical className="drag-icon" />
-            <div className="floating-card-info">
-              <div className="floating-card-title-row">
-                <h3 className="floating-card-title">{song.title}</h3>
-                {isNewlyAdded && (
-                  <span className="floating-card-badge">NEW</span>
-                )}
-              </div>
-              <p className="floating-card-artist">{song.artist}</p>
-              {song.album && (
-                <p className="floating-card-album">{song.album}</p>
-              )}
-            </div>
-          </div>
-          <button className="floating-card-close" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-        
-        {song.imageUrl && (
-          <img 
-            src={song.imageUrl} 
-            alt={song.title}
-            className="floating-card-image"
-            draggable={false}
-          />
-        )}
-        
-        {song.previewUrl && (
-          <div className="floating-card-player">
-            <AudioPlayer previewUrl={song.previewUrl} className="w-full" />
-          </div>
-        )}
-        
-        <div className="floating-card-actions">
-          {song.spotifyUrl && (
-            <button className="floating-card-btn floating-card-btn-spotify" onClick={handleSpotifyClick}>
-              <ExternalLink size={16} />
-              <span>Apple Music</span>
-            </button>
+        <div className="floating-card-layout">
+          {song.imageUrl && (
+            <img 
+              src={song.imageUrl} 
+              alt={song.title}
+              className="floating-card-image"
+              draggable={false}
+            />
           )}
           
-          <button 
-            className="floating-card-btn floating-card-btn-delete" 
-            onClick={handleRemove}
-            title="削除 (Deleteキー)"
-          >
-            <Trash2 size={16} />
-          </button>
+          <div className="floating-card-right">
+            <div className="floating-card-header">
+              <div className="floating-card-drag-handle">
+                <GripVertical className="drag-icon" />
+                <div className="floating-card-info">
+                  <div className="floating-card-title-row">
+                    <h3 className="floating-card-title">{song.title}</h3>
+                    {isNewlyAdded && (
+                      <span className="floating-card-badge">NEW</span>
+                    )}
+                  </div>
+                  <p className="floating-card-artist">{song.artist}</p>
+                  {song.album && (
+                    <p className="floating-card-album">{song.album}</p>
+                  )}
+                </div>
+              </div>
+              <button className="floating-card-close" onClick={onClose}>
+                <X size={16} />
+              </button>
+            </div>
+            
+            {song.previewUrl && (
+              <div className="floating-card-player">
+                <AudioPlayer previewUrl={song.previewUrl} className="w-full" />
+              </div>
+            )}
+            
+            <div className="floating-card-actions">
+              {song.spotifyUrl && (
+                <button className="floating-card-btn floating-card-btn-spotify" onClick={handleSpotifyClick}>
+                  <ExternalLink size={14} />
+                  <span>Apple Music</span>
+                </button>
+              )}
+              
+              <button 
+                className="floating-card-btn floating-card-btn-delete" 
+                onClick={handleRemove}
+                title="削除 (Deleteキー)"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
