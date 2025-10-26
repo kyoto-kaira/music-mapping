@@ -27,8 +27,16 @@
       "dest": "/api/create-map.ts"
     },
     {
-      "src": "/(.*)",
+      "src": "/assets/(.*)",
+      "dest": "/build/assets/$1"
+    },
+    {
+      "src": "/(favicon\\.ico|favicon\\.svg|logo\\.svg|apple-touch-icon\\.png)",
       "dest": "/build/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/build/index.html"
     }
   ]
 }
