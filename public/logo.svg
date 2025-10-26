@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+  <defs>
+    <linearGradient id="logGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Icon -->
+  <rect x="5" y="10" width="40" height="40" rx="8" fill="url(#logGrad)"/>
+  <path d="M 25 20 L 35 30 L 25 40 L 15 30 Z" fill="white" opacity="0.95"/>
+  <circle cx="20" cy="30" r="1.5" fill="white" opacity="0.9"/>
+  <circle cx="30" cy="30" r="1.5" fill="white" opacity="0.9"/>
+  
+  <!-- Text -->
+  <text x="55" y="25" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#1f2937">
+    Music
+  </text>
+  <text x="55" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#6b7280">
+    Mapping
+  </text>
+</svg>
+

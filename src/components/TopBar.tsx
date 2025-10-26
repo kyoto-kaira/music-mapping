@@ -16,7 +16,10 @@ export function TopBar({ onCreateMap, isLoading, mapAxes }: TopBarProps) {
 
   return (
     <div className="border-b bg-card p-4">
-      <div className="flex items-center justify-between max-w-4xl">
+      <div className="flex items-center gap-6 max-w-6xl mx-auto">
+        <div className="flex-shrink-0">
+          <img src="/logo.svg" alt="Music Mapping" className="h-10" />
+        </div>
         <form onSubmit={handleSubmit} className="flex items-end gap-4 flex-1">
           <div className="flex-1">
             <Label htmlFor="x-axis">X軸</Label>
@@ -47,7 +50,6 @@ export function TopBar({ onCreateMap, isLoading, mapAxes }: TopBarProps) {
             {isLoading ? CONSTANTS.BUTTONS.CREATING_MAP : CONSTANTS.BUTTONS.CREATE_MAP}
           </Button>
         </form>
-        
       </div>
     </div>
   );
